@@ -3,15 +3,15 @@
 PROCEDURE CTRMED
 
 	DEFINE WINDOW ctrm_1;
-	           AT 0,0 ;
- 				  WIDTH 900				;
-              HEIGHT 670    ;
-	           TITLE 'Controle de Especialistas do Aluno' 	;
-				  ICON "TUTOR";
-				  CHILD 				;
-		        FONT 'ARIAL' SIZE 11;	
-				  ON MAXIMIZE ThisWindow.Center ;
-		        ON INIT (Cria_aluno_m(),Desactivctrm(),Actualizarctrm())
+	       AT 0,0 ;
+ 		   WIDTH 900				;
+           HEIGHT 670    ;
+	       TITLE 'Controle de Especialistas do Aluno' 	;
+		   ICON "TUTOR";
+		   CHILD 				;
+		   FONT 'ARIAL' SIZE 11;	
+		   ON MAXIMIZE ThisWindow.Center ;
+		   ON INIT (Cria_aluno_m(),Desactivctrm(),Actualizarctrm())
 
 		DEFINE TOOLBAR ToolBar_1 BUTTONSIZE 59,35 FLAT BORDER
 
@@ -58,21 +58,21 @@ PROCEDURE CTRMED
 		END TOOLBAR
 
             @ 56,10 grid Browse_1				;
-		        	     WIDTH 290 				;
+		        	WIDTH 290 				;
                     HEIGHT 230                            ; 
-			           HEADERS { 'RA. Aluno' , 'Aluno'}	;
-		        	     WIDTHS { 90, 200 }			;
-			           ON CHANGE Actualizarctrm() ;
-			           ON DBLCLICK ( Activarctrm() , If ( !ctrm->(TREG()) , Desactivctrm() , Nil ) )
+			        HEADERS { 'RA. Aluno' , 'Aluno'}	;
+		        	WIDTHS { 90, 200 }			;
+			        ON CHANGE Actualizarctrm() ;
+			        ON DBLCLICK ( Activarctrm() , If ( !ctrm->(TREG()) , Desactivctrm() , Nil ) )
 		
                      @ 70,300 LABEL L_ra;
                               VALUE 'R.A';
-						          	WIDTH 40           ;
+						      WIDTH 40           ;
                               HEIGHT 30           
 
                      @ 70,570 LABEL L_med;
                               VALUE 'Medico';
-						          	WIDTH 100           ;
+						      WIDTH 100           ;
                               HEIGHT 30     
 
                      @ 100,300 LABEL L_dtmed;
@@ -389,11 +389,9 @@ LOCAL nCounter:= 0
 DELETE ITEM ALL FROM G_ctrmedico OF ctrm_1
 
 oQuery:=oServer:Query("Select tab_med.desmed,ctrmed.DTENCAM,ctrmed.DESCENCA,ctrmed.OBSMED,ctrmed.RETFAM,ctrmed.OBSFAM"
-                oQuery+=" From escola.ctrmed INNER JOIN"
-                oQuery+=" tab_med ON ctrmed.codmed = tab_med.codmed"
-					 oQuery+=" where ctrmed.ra_med='"+x_Aluno+"')"
-					                               
-
+                oQuery+=" From escola.ctrmed INNER JOIN tab_med ON ctrmed.codmed = tab_med.codmed"
+					 oQuery+=" where ctrmed.ra_med ='"+x_Aluno+"'")
+                
 For i := 1 To oQuery:LastRec()
     nCounter++
     oRow := oQuery:GetRow(i)

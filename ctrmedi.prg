@@ -1,5 +1,5 @@
 #Include "minigui.ch"
-
+  // atulizando sql 04/09
 PROCEDURE CTRMED
 
 	DEFINE WINDOW ctrm_1;
