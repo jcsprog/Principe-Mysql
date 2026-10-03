@@ -1,0 +1,49 @@
+Select FILIACAO,NOME_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,RESP_CRIA,
+          CASE PRIO_RESP WHEN 1 THEN 'Alta'
+               WHEN 2 THEN 'Media'
+               WHEN 3 THEN 'Baixa'
+          END AS PRIOR,
+          IF(RESP_CRIA=1,'Sim','Não')
+          From escola.tab_resp c;
+          
+oQuery := oServer:Query( "Select FILIACAO,NOME_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,RESP_CRIA"
+       oQuery+=" CASE PRIO_RESP WHEN 1 THEN 'Alta'"
+       oQuery+=" WHEN 2 THEN 'Media'"
+       oQuery+=" WHEN 3 THEN 'Baixa'"
+       oQuery+=" END AS PRIOR,"
+       oQuery+=" IF(RESP_CRIA=1,'Sim','Não') IS RESPON"
+       oQuery+=" From escola.tab_resp WHERE RA_RESP="+'c_codigo')          
+       
+//   cQuery:="INSERT INTO escola.cad_alu (RA_ALUNO,CPF_ALU,DT_NASC)"
+//	cQuery+=" values ('"+strzero(Aluno_1.N_RA.Value,10)+"','"+Aluno_1.C_CPF.Value+"','"+dtos(Aluno_1.D_dtnas.Value)+"')"
+
+   oQueryUp:=oServer:Query(cQuery)
+/*  
+
+   cQuery:="INSERT INTO escola.cad_alu (RA_ALUNO,CPF_ALU,DT_NASC,SEXO_ALU,END_ALU,BAI_ALU,"
+   cQuery+="CID_ALU,CEP_ALU,FONE_1,FONE_2,NOME_ALU,COD_HOR,PROF_RESP,DTENTR,DTSAID,RG_ALU)"
+   cQuery+=" values ('"+strzero(Aluno_1.N_RA.Value,10)+"','"+Aluno_1.C_CPF.Value+"','"+dtos(Aluno_1.D_dtnas.Value)
+   cQuery+="','"+str(Aluno_1.C_sexo.Value,1)+"','"+Aluno_1.C_END.Value+"','"+Aluno_1.C_BAI.Value
+   cQuery+="','"+Aluno_1.C_CID.Value+"','"+Aluno_1.C_CEP.Value+"','"+Aluno_1.C_FONE1.value
+   cQuery+="','"+Aluno_1.C_FONE2.Value+"','"+Aluno_1.C_nome.value+"','"+substr(Aluno_1.T_turma.displayvalue,1,6)
+	cQuery+="','"+Aluno_1.T_profe.displayvalue+"','"+dtos(Aluno_1.D_dtentr.value)+"','"+dtos(Aluno_1.D_dtsaid.value)
+	cQuery+="','"+Aluno_1.C_rgalu.value+"')"
+   oQueryUp:=oServer:Query(cQuery) 
+	
+	if oQuery:LastRec() > 0
+   nCounter++
+   oRow := oQuery:GetRow(i)
+	do case
+      case oRow:fieldGet(5) = "1"
+	        a_prio:="Alta"
+      case oRow:fieldGet(5) = "2"
+	        a_prio:="Media"
+      case oRow:fieldGet(5) = "3"
+		     a_prio:="Baixa"	
+   endcase 	
+	a_Resp:=if(oRow:fieldGet(6)="1","Sim","Não")		 			 		       
+
+   aadd(a_rray,{oRow:fieldGet(1),oRow:fieldGet(2),oRow:fieldGet(3),oRow:fieldGet(4),a_prio,a_Resp})
+   //ADD item ( substr(oRow:fieldGet(1),1,15),substr(oRow:fieldGet(2),1,30),substr(oRow:fieldGet(3),1,17),substr(oRow:fieldGet(4),1,17),substr(oRow:fieldGet(5),1,1),substr(oRow:fieldGet(6),1,1)) TO G_Parente Of Aluno_1
+   oQuery:Skip(1)
+endif       

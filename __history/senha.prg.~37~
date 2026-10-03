@@ -1,0 +1,135 @@
+#include "MiniGUI.ch"
+
+**** senhas -
+FUNCTION SENHA
+
+         GG := 0
+         
+         DEFINE WINDOW Jcs_1 ;
+	        	    AT 0,12 ;
+                WIDTH 340  ;
+                HEIGHT 220 ;
+				    TITLE EMPRESA[1] ;
+	    			 ICON "CADEADO" ;
+                MODAL NOSIZE NOSYSMENU ;
+					 BACKCOLOR BLUE ;
+	             ON INIT ( AbrirSenha()) 
+		
+					 @ 10,08 LABEL Label_Usuario  ;
+                        VALUE 'Usuario'      ;
+                        WIDTH 60             ;
+                        HEIGHT 	30          ;
+						      FONT "Arial" SIZE 12;
+					      	BACKCOLOR BLUE ;
+                        FONTCOLOR WHITE BOLD
+
+                @ 40,10 LABEL Label_Senha    ;
+                        VALUE 'Senha'        ;
+                        WIDTH 60             ;
+                        HEIGHT 30            ;
+					      	FONT "Arial" SIZE 12;
+                        BACKCOLOR BLUE ;
+                        FONTCOLOR WHITE BOLD
+
+                @ 10,70 TEXTBOX T_Usuario    ;
+                        OF Jcs_1       ;
+                        WIDTH 200            ;
+                        MAXLENGTH 30 ;
+                        UPPERCASE  ;
+                        TOOLTIP 'Nome do Usuario' 
+						
+				    @ 40,70 TEXTBOX T_SENHA	;
+                        PASSWORD		;                         
+                        FONT "Arial" SIZE 09	;             
+                        TOOLTIP "Senha de Acesso";
+      			         MAXLENGTH 05	;
+			               UPPERCASE		;
+			               ON ENTER VERIFICA_SENHA()	
+
+               @ 090,50 LABEL T_ABRI  ;
+                        VALUE 'Inicializando Arquivos Aguarde !!';
+                        WIDTH 300   ;
+                        HEIGHT 20   ;
+					      	FONT "Arial" SIZE 13 ;
+					      	BACKCOLOR BLUE ;
+                        FONTCOLOR WHITE BOLD
+
+          		@ 110,18 PROGRESSBAR Progress_1 ;
+		                 RANGE 0,100 ;
+               		  WIDTH 300 HEIGHT 23 ;
+               		  TOOLTIP "ProgressBar"
+
+               @ 150,080 BUTTON Btn_Salvar Of Jcs_1     ;
+                         CAPTION 'Verifica'             ;
+                         ACTION Verifica_Senha()       ;       
+                         WIDTH 80 HEIGHT 25         ;
+                         FONT "Arial" SIZE 09          ;
+                         TOOLTIP "Verifica Senha" ;
+                      FLAT
+
+                @150,180 BUTTON Btn_Cancelar Of Jcs_1 ;
+                         CAPTION '&Cancelar'		;
+       		             ACTION  EXIT PROGRAM ;					     
+                         WIDTH 80 HEIGHT 25		;
+		                   FONT "Arial" SIZE 09		;
+                         TOOLTIP "Cancela"	;
+		                FLAT
+
+	END WINDOW
+	
+	Jcs_1.Progress_1.Value := 30
+	
+   Jcs_1.CENTER
+
+   Jcs_1.ACTIVATE
+   
+Return nil
+
+**********************
+PROCEDURE AbrirSenha
+**********************
+Jcs_1.T_Usuario.ENABLED:=.T.
+Jcs_1.T_SENHA.ENABLED:=.T.
+Jcs_1.T_Usuario.Value:=SPACE(30)
+Jcs_1.T_SENHA.Value:=SPACE(08)
+Jcs_1.T_Usuario.SETFOCUS
+RETURN
+
+PROCEDURE Verifica_Senha()
+Local oRow
+Local oQuery
+LOCAL u_Senha:={}
+LOCAL CTRSENHA:=0
+
+oQuery := oServer:Query( "Select nomeu,senhau From escola.jcsarq where nomeu='"+Jcs_1.T_Usuario.Value+"'")
+
+if oQuery:LastRec() > 0
+   oRow := oQuery:GetRow(1)
+   AADD(u_Senha,{oRow:fieldGet(1),oRow:fieldGet(2)})
+   oQuery:Destroy()
+ 
+   IF !ALLTRIM(u_Senha[1,2])==ALLTRIM(Jcs_1.T_SENHA.Value)
+      MsgInfo ("Senha Nao Confere!"+u_Senha[1,2])
+      GG++
+      CTRSENHA++
+   ENDIF
+   IF !ALLTRIM(u_Senha[1,1]) == ALLTRIM(UPPER(Jcs_1.T_Usuario.Value))
+      MsgInfo ("Usuario Nao Confere!")
+      GG++
+      CTRSENHA++
+   ENDIF   
+   IF GG>3
+      MsgInfo ("Sistema CANCELADO !!!!!")
+      EXIT PROGRAM 
+   ENDIF   
+   IF CTRSENHA == 0
+      VUSUARIO:=u_Senha[1,1]
+      JCS_1.RELEASE
+   ENDIF
+ELSE
+   gg++
+   MsgInfo ("Usuario/Senha Nao Conferem!","Verifique") 
+ENDIF
+
+RETURN NIL
+

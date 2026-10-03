@@ -1,0 +1,29 @@
+#include "MiniGUI.ch"
+#include "winprint.ch"
+
+    
+FUNCTION MAIN
+      SET DELETED ON
+      SET CENTURY ON
+      SET EXCLUSIVE OFF
+      SET DATE BRIT
+      SET EPOCH TO 1920
+      SET CENTURY ON
+      SET DATE FORMAT TO "DD/MM/YYYY"
+      SET LANGUAGE TO PORTUGUESE      
+      Set Navigation Extended 
+      SET ShowDetailError ON
+      SET BROWSESYNC ON
+      DBCOMMITALL()
+
+       dt:=ctod("16/11/1965')
+       
+       if substr(dtoc(dt),4,2) = substr(dtoc(date()),4,2)
+          msgbox("ok")
+       else
+		    msgbox("nao tem aniversariantes")
+	    endif		    
+
+
+
+Return

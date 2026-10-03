@@ -1,0 +1,21 @@
+Select FILIACAO,NOME_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,RESP_CRIA,
+          CASE PRIO_RESP WHEN 1 THEN 'Alta'
+               WHEN 2 THEN 'Media'
+               WHEN 3 THEN 'Baixa'
+          END AS PRIOR,
+          IF(RESP_CRIA=1,'Sim','Não')
+          From escola.tab_resp c;
+          
+oQuery := oServer:Query( "Select FILIACAO,NOME_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,RESP_CRIA"
+       oQuery+=" CASE PRIO_RESP WHEN 1 THEN 'Alta'"
+       oQuery+=" WHEN 2 THEN 'Media'"
+       oQuery+=" WHEN 3 THEN 'Baixa'"
+       oQuery+=" END AS PRIOR,"
+       oQuery+=" IF(RESP_CRIA=1,'Sim','Não') IS RESPON"
+       oQuery+=" From escola.tab_resp WHERE RA_RESP="+'c_codigo')          
+       
+//   cQuery:="INSERT INTO escola.cad_alu (RA_ALUNO,CPF_ALU,DT_NASC)"
+//	cQuery+=" values ('"+strzero(Aluno_1.N_RA.Value,10)+"','"+Aluno_1.C_CPF.Value+"','"+dtos(Aluno_1.D_dtnas.Value)+"')"
+
+   oQueryUp:=oServer:Query(cQuery)
+/*         

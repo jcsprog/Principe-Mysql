@@ -1,0 +1,351 @@
+#include "MiniGUI.ch"
+#include "winprint.ch"
+#include "hmg.ch"
+#define BM_WIDTH     1
+#define BM_HEIGHT    2
+
+Function Main()
+
+   SET LANGUAGE TO PORTUGUESE      
+   Set Navigation Extended 
+   SET ShowDetailError ON
+   SET BROWSESYNC ON
+   SET MULTIPLE OFF WARNING
+   SET DATE BRIT
+   SET EPOCH TO 1920
+   SET CENTURY ON
+   SET DATE FORMAT TO "DD/MM/YYYY"
+   DBCOMMITALL()
+
+   Public oServer	 := NIL
+   PUBLIC oQueryUp := NIL
+   Public Empresa  :={}
+   Public Vusuario :="Teste"
+   
+   AbriSql()
+   G_Empresa()
+   IF SUBSTR(Empresa[1],1,6) # "ESCOLA"
+	   MSGINFO("JCSoft - Cel.(11) 7378-8895","Sistema Danificado !!")
+	   DBCLOSEALL()
+	   EXIT PROGRAM
+	ENDIF   
+   	    
+	DEFINE WINDOW Principe_1;
+	       AT 0,0 ;
+	       WIDTH GetDesktopWidth() ;
+          HEIGHT GetDesktopHeight()-30; 
+	       TITLE Empresa[1]	;
+			 ICON "TUTOR";
+		    main ;
+		    ON INIT	( SENHA(), Principe_1.STATUSBAR.ITEM(2):="Usuario :"+VUSUARIO )
+		    		    
+       DEFINE BKGBRUSH newBrush PATTERN IN Principe_1 BITMAP principe.jpg
+
+  Define main menu
+
+      Popup 'Cadastros'
+        Item 'Empresa         ' Action EMP() IMAGE 'BORRAR' MESSAGE "Cadastro da Empresa"
+        Separator
+        Item 'Turma           ' Action Turmas() IMAGE "edit_edit" MESSAGE "Cadastro de Turma dos Alunos"
+        Separator
+        Item 'Cargos           ' Action cargo(5) IMAGE "button7" MESSAGE "Cadastro de Cargos dos Funcioários"
+        Separator
+        Item 'Médicos          ' Action medic(8) IMAGE "edit_new" MESSAGE "Cadastro de Médicos"
+        Separator
+        Item 'Funcionarios    ' Action clientes(3) IMAGE 'Clientes' MESSAGE 'Cadastro de Professores'
+        Separator 
+        Separator
+        Item 'Fim' Action EXIT PROGRAM Image 'edit_close'
+      End Popup
+
+      Popup 'Processos Diarios'
+            Separator        
+            Item 'Controle de Alunos ' Action principe(1) IMAGE 'contactos' MESSAGE 'Controle Geral de Alunos'     
+            Separator
+            Item 'Controle de Medico ' Action teste() //CTRMED(9) IMAGE "hp_gopage" MESSAGE 'Controle Medico dos Alunos'     
+            Separator
+            Item 'Controle de Observações ' Action teste() //CTROBS(6) IMAGE "edit_ok" MESSAGE 'Controle Observações dos Alunos'     
+      end popup
+
+      Popup 'Relatorios'
+        Item "&Aniversariantes do Mês" Action teste() //RlAniver() IMAGE "edit_print" MESSAGE "Relatório Aniversariantes do Mês"
+        Separator
+        Item "&Turmas " Action teste() //Rlturma() IMAGE "hbprint_option" MESSAGE "Relatório de Turma dos Alunos"
+
+      End Popup
+
+      Popup 'Utilitarios'
+      
+        Popup 'Senhas Usuarios ' 
+               ITEM 'Inclusão ' Action teste() //USUARIOS(1) IMAGE "Free" MESSAGE "Criar Usuario e Liberação"
+               ITEM 'Alteração' Action teste() //USUARIOS(2) IMAGE "info" MESSAGE "Alterar Liberações do Sistema"
+               ITEM 'Exclusão' Action teste() //USUARIOS(3) IMAGE "check" MESSAGE "Exclusão de Usuario e Suas Liberações"
+               ITEM 'Troca de Senha' Action teste() // USUARIOS(4) IMAGE "br_no" MESSAGE "Troca de Senha"
+  		  end popup
+        Item 'Transfere Foto para Sistema' Action teste() //Trans_foto() IMAGE "custos" MESSAGE "Copia a foto do aluno para o Sistema"  		  
+        Separator
+        Item 'Reorganizacao   ' Action teste() //REORGANIZA(0) IMAGE "info" MESSAGE "Reorganização de Arquivos Atualização de Indices"
+        Separator
+        Item 'Backup/Restauração' Action teste() //BACKUPJCS(0) IMAGE "check" MESSAGE "Backup Geral do Sistema / Restauração do Sistema"
+      End Popup                                                   
+
+      Popup 'Informações'
+
+        Item 'Desenvolvimento' Action MsgInfo ( "(OPEN SOURCE) Desevolvido por Joao Carlos de Souza| Analista Sistemas | Cel.:9.7378-8895 ",MiniGuiVersion() )
+
+      End Popup
+   End Menu
+
+		DEFINE STATUSBAR FONT 'MS Sans Serif' SIZE 9 
+			STATUSITEM ""
+			STATUSITEM "Usuario:" WIDTH 100
+			STATUSITEM "Versão 1.00(Mysql)" WIDTH 100
+			STATUSITEM 'JCSoft Sistemas - Cel:(11)7378-8895' WIDTH 200
+			CLOCK WIDTH 85
+			DATE 
+		END STATUSBAR
+
+      Principe_1.STATUSBAR.ITEM(2):="Usuario: " + VUSUARIO
+
+End Window
+
+Principe_1.Center 
+Principe_1.Activate 
+
+Return
+
+#include "EMPRESA.PRG"
+#include "TURMA.PRG"
+#include "CARGOS.PRG"
+#include "funciona.prg"
+#include "TABMED.prg"
+#include "Principe.prg"
+//#include "senha.prg"
+
+
+Procedure AbriSql()
+LOCAL cHostName:= "localhost"
+LOCAL cUser	   := "jhonny"
+LOCAL cPassWord:= "175227JcS@#"
+LOCAL cDataBase:= "Escola"
+
+oServer := TMySQLServer():New(cHostName, cUser, cPassWord )
+If oServer:NetErr() 
+  MsGInfo("Error de Abertura MySql Server: " + oServer:Error() )
+  Release Window ALL
+  Quit
+EndIf
+
+oServer:SelectDB( cDatabase )
+If oServer:NetErr() 
+  MsGInfo("Error Conecção Banco Escola "+cDatabase+": "+oServer:Error() )
+  Release Window ALL
+  Quit
+EndIf
+
+Return Nil                     
+
+*--------------------------------------------------------------*
+Function G_Empresa()                     
+*--------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL oQueryUp
+local nCounter:=0
+oQuery := oServer:Query( "Select descr From arqemp" )
+For i := 1 To oQuery:LastRec()
+    nCounter++
+    oRow := oQuery:GetRow(i)
+    AADD(Empresa,oRow:fieldGet(1)) 
+    oQuery:Skip(1)
+Next
+oQuery:Destroy()
+Return NIL
+
+**********************************************************
+Function Libera_modulo(vusuario,n_Modulo,S_solicita)
+**********************************************************
+local l_Libera:=.f.
+local x_Texto:=space(10)
+IF JCS->(DBSEEK(VUsuario+STR(n_Modulo,5)))
+   do case  
+      case jcs->adm==1  // administrador
+           x_Texto:="administrador"
+           l_Libera:=.t.
+      case S_solicita == "I"
+       	  x_Texto:="Inclusão"
+   	     l_Libera:=JCS->INCLU
+      case S_solicita == "A"
+           x_Texto:="Alteração"
+		     l_Libera:=JCS->ALTEU
+	   case S_solicita == "E"
+	        x_Texto:="Exclusão"
+		     l_Libera:=JCS->EXCLU
+	   case S_solicita == "P"
+	        x_Texto:="Impressão"
+			  l_Libera:=JCS->IMPRU
+	endcase
+ENDIF
+if !l_Libera
+   MSGINFO("Sem Liberação Para ("+x_Texto+") Solitice ao Administrador!!","Liberação de Modulos")
+endif
+RETURN (l_Libera)
+
+************************
+procedure teste()
+************************
+msgbox("Em Fase de Criação")
+return nil
+
+
+Function PegaValorDaColuna( xObj, xForm, nCol)
+	 Local nPos := GetProperty ( xForm , xObj , 'Value' )
+	 Local aRet := GetProperty ( xForm , xObj , 'Item' , nPos )
+Return aRet[nCol]	
+/*
+ * MsgOptions([cText], [cTitle], [cImage], aOptions, [nDefaultOption], [nSeconds])
+*/
+
+Function MsgOptions(cText, cTitle, cImage, aOptions, nDefaultOption, nSeconds )
+   Local nItem:=0, nBtnWidth:=0, aBtn:=Array(Len(aOptions)), aImgInfo
+   Local nBtnPosX:=10, nBtnPosY:=85, cOption:=""
+
+   Default cText           To "SELECIONE UMA OPÇÃO"
+   Default cTitle          To "P E S Q U I S A "
+   Default cImage          To ""
+   Default nDefaultOption  To 1
+   Default nSeconds        To 0
+
+   DEFINE FONT _Font_Options FONTNAME "MS Sans Serif" SIZE 12
+
+   //Calcular anchura máxima de un botón para igualarlos todos
+   For nItem:=1 To Len(aOptions)
+      aOptions[nItem]:=Alltrim(aOptions[nItem])
+      nBtnWidth:=Max( GetTextWidth(, aOptions[nItem], GetFontHandle("_Font_Options")), nBtnWidth )
+   Next
+   nBtnWidth+=5
+
+   DEFINE WINDOW _Options  ;
+      AT 0,0               ;
+      WIDTH (Len(aOptions)*(10+nBtnWidth))+15 ;
+      HEIGHT 155           ;
+      TITLE cTitle         ;
+      ICON "BUSCAR.ICO"    ;
+      MODAL                ;
+      NOSIZE               ;
+      ON RELEASE IF( IsControlDefined( Timer_1, _Options ), _Options.Timer_1.Release, )
+
+      ON KEY ESCAPE ACTION _Options.Release
+
+      If !Empty(cImage)
+         aImgInfo := BmpSize(cImage)
+         If !Empty(aImgInfo [BM_WIDTH])
+           @ 20, 10 IMAGE _Image PICTURE (cImage) WIDTH aImgInfo [BM_WIDTH] HEIGHT aImgInfo [BM_HEIGHT]
+           @ 40, 55 LABEL _Label VALUE cText WIDTH (Len(aOptions)*(10+nBtnWidth))-50 HEIGHT 30 ;
+             TRANSPARENT CENTERALIGN FONT "_Font_Options"
+         Endif
+      Else
+           @ 40, 10 LABEL _Label VALUE cText WIDTH (Len(aOptions)*(10+nBtnWidth))-10 HEIGHT 30 ;
+             TRANSPARENT CENTERALIGN FONT "_Font_Options"
+      Endif
+
+      For nItem:=1 To Len(aOptions)
+         aBtn[nItem]:="_Btn_"+Ltrim(Str(nItem))
+         cOption:=aBtn[nItem]
+         @ nBtnPosY, nBtnPosX BUTTON &cOption CAPTION aOptions[nItem] WIDTH nBtnWidth HEIGHT 25 FONT "_Font_Options" ;
+                   ACTION ( cOption:=GetProperty("_Options", This.Name, "Caption"), _Options.Release )
+         nBtnPosX+=nBtnWidth+10
+      Next
+
+      DoMethod("_Options", aBtn[nDefaultOption], "SetFocus")
+
+      If nSeconds>0
+         DEFINE TIMER Timer_1 Interval nSeconds*1000  ;
+                ACTION ( cOption:=aOptions[nDefaultOption], _Options.Release )
+      Endif
+
+   END WINDOW
+
+   CENTER WINDOW _Options
+
+   ACTIVATE WINDOW _Options
+
+   RELEASE FONT _Font_Options
+
+Return Ascan(aOptions,Alltrim(cOption))
+
+/*
+ * MsgLogo(cImage, [nSeconds])
+*/
+
+Function MsgLogo( cImage, nSeconds, lRound )
+
+Local aImgInfo:=GetImageSize(cImage), width, height
+
+Default nSeconds To 5, lRound To .F.
+
+   If .Not. IsWindowDefined( _Logo ) .And. .Not. Empty( aImgInfo [BM_WIDTH] )
+
+      width :=aImgInfo [BM_WIDTH]+GetBorderWidth()
+      height:=aImgInfo [BM_HEIGHT]+GetBorderHeight()
+
+      DEFINE WINDOW _Logo   ;
+         AT 0,0             ;
+         WIDTH width        ;
+         HEIGHT height      ;
+         CHILD TOPMOST      ;
+         NOCAPTION          ;
+         ON SIZE (_Logo.Width:=width, _Logo.Height:=height) ;
+         ON MOUSECLICK _Logo.Release
+
+         @ 0, 0 IMAGE _Image PICTURE (cImage) WIDTH aImgInfo [BM_WIDTH] HEIGHT aImgInfo [BM_HEIGHT]
+
+         DEFINE TIMER Timer_1 INTERVAL nSeconds*1000 ACTION _Logo.Release
+
+      END WINDOW
+
+      If lRound
+         SET REGION OF _Logo ROUNDRECT 68,68,width,height
+      Endif
+
+      CENTER WINDOW _Logo
+
+      ACTIVATE WINDOW _Logo
+
+   Else
+      MsgInfo("No se ha podido llevar a cabo la operación", "Error")
+   Endif
+
+Return Nil
+
+*-------------------------------------------------------------
+Static Function GetImageSize( cImagePath )
+*-------------------------------------------------------------
+Local ObjImage, aRetArr:={0,0}
+
+   If FILE( GetStartUpFolder() + '\ximage.dll' )
+
+	objImage := CreateObject( "XStandard.Image" )
+
+	if objImage:Load( cImagePath ) == .T.
+		aRetArr[1] := objImage:Width
+		aRetArr[2] := objImage:Height
+	endif
+
+	objImage := NIL
+
+   Endif
+
+Return aRetArr
+
+*-------------------------------------------------------------
+Static Function UnRegXImage()
+*-------------------------------------------------------------
+
+	If FILE( GetStartUpFolder() + '\ximage.dll' )
+		EXECUTE FILE "regsvr32" PARAMETERS "/u /s XImage.dll" HIDE
+	Endif
+
+Return Nil
+

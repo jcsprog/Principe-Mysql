@@ -1,0 +1,187 @@
+#Include "minigui.ch"
+
+PROCEDURE EMP()
+   	
+        DEFINE WINDOW Empresa_1 ;
+	         	AT 0,0			;
+	         	WIDTH 630		;
+		         HEIGHT 320                   	;
+		         TITLE 'Cadastro da Empresa'		;
+ 				   CHILD ;
+		         ON MAXIMIZE ThisWindow.Center ;
+				   ON INIT ( AbrirEmp() ) 
+                                    
+                @ 10,10 LABEL Label_Codigo ;
+                        VALUE 'Codigo'    ;
+                        WIDTH 60           
+
+                @ 40,10 LABEL Label_Nome   ;
+                        VALUE 'Nome '   ;
+                        WIDTH 60                     
+
+	             @ 70,10 LABEL Label_Endereco	;
+  		                  VALUE 'Endereço'		;
+                        WIDTH 60                    
+
+                @100,10 LABEL Label_Bairro ;
+                        VALUE 'Bairro'      ;
+                        WIDTH 60                   
+
+                @100,230 LABEL Label_Cidade ;
+                        VALUE 'Cidade'      ;
+                        WIDTH 60                   
+
+	             @100,440 LABEL Label_Cep		;
+		                  VALUE 'Cep'		;
+                        WIDTH 29                         
+
+                @130,10 LABEL Label_CGC ;
+                        VALUE 'CGC'              ;
+                        WIDTH 60                 
+
+                @130,345 LABEL Label_ESTADO        ;
+                        VALUE 'Estado'              ;
+                        WIDTH 45                           
+
+	             @160,10 LABEL Label_Fone1	;
+                        VALUE 'TeleFone'            ;
+                        WIDTH 60                        
+
+	             @190,10 LABEL Label_Email	;
+		                  VALUE 'e-mail'		;
+                        WIDTH 60                 
+
+	             @ 10,70 TEXTBOX T_Codigo ;
+		                  WIDTH 40			;
+                        ON ENTER Empresa_1.T_Nome.SetFocus
+
+                @ 40,70 TEXTBOX T_Nome          ; 
+                        OF Empresa_1         ;
+                        WIDTH 300         ;
+                        MAXLENGTH 30        ;
+                        UPPERCASE         ;
+                        ON ENTER Empresa_1.T_Endereco.SetFocus
+
+                @ 70,70 TEXTBOX T_Endereco	;
+                        OF Empresa_1          ;
+	                     WIDTH 350		;
+                        MAXLENGTH 40        ;
+                        UPPERCASE ;
+                        ON ENTER Empresa_1.T_BAIRRO.SetFocus
+
+                @100,70 TEXTBOX T_BAIRRO   ;
+                        OF Empresa_1          ; 
+                        WIDTH 150         ;
+                        MAXLENGTH 20    ;
+                        ON ENTER Empresa_1.T_CIDADE.SetFocus
+                 
+                @100,290 TEXTBOX T_CIDADE  ;
+                        OF Empresa_1          ; 
+                        WIDTH 130         ;
+                        MAXLENGTH 20    ;
+                        ON ENTER Empresa_1.T_Cep.SetFocus
+
+                @100,480 TEXTBOX T_Cep   ;
+                         OF Empresa_1             ; 
+                         INPUTMASK '99999-999' ;
+                         ON ENTER Empresa_1.T_CGC.SetFocus
+
+                @130,70 TEXTBOX T_CGC ;
+                        OF Empresa_1         ;
+                        WIDTH 250         ;
+                        MAXLENGTH 18 ;
+                        ON ENTER Empresa_1.T_Estado.SetFocus
+
+                @130,390 TEXTBOX T_Estado	;
+		                  OF Empresa_1		;
+		                  WIDTH 30		;
+                        MAXLENGTH 02 ;
+                        ON ENTER Empresa_1.T_Fone1.SetFocus
+
+                @160,70 TEXTBOX T_Fone1   ;
+                        OF Empresa_1 ;
+                        WIDTH 110         ;
+                        MAXLENGTH "(99) 9999-9999" 
+
+                @190,70 TEXTBOX T_Email ;
+	                     OF Empresa_1		;
+		                  WIDTH 400		;
+		                  MAXLENGTH 40	
+
+	             @ 240,300 BUTTON Btn_Salvar Of Empresa_1	;
+                        CAPTION '&Salvar'             ;
+                        ACTION Salvar_Registro()            ;       
+                        WIDTH 80 HEIGHT 27         ;
+                        FONT "Arial" SIZE 09          ;
+                        TOOLTIP "Salvar Registro" ;
+                     FLAT
+
+	             @ 240,450  BUTTON Btn_Cancelar Of Empresa_1	;
+		                  CAPTION '&Cancelar'		;
+			               ACTION Sair_do_Form2()		;       
+ 			               WIDTH 80 HEIGHT 27		;
+		                  TOOLTIP "Cancelar Operação"	;
+			            FLAT
+
+	END WINDOW
+
+   Empresa_1.CENTER   
+   
+	Empresa_1.ACTIVATE
+Return 
+
+Procedure AbrirEmp()
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+
+oQuery := oServer:Query( "Select codigo,descr,end,bairro,cidade,cep,cgc,uf,tel,email From arqemp")
+aQteProd:=oQuery:LastRec()
+                
+If aQteProd > 0
+   oRow := oQuery:GetRow(1) 
+   Empresa_1.T_Codigo.ENABLED:= .F.
+   Empresa_1.T_Nome.ENABLED  := .F.
+   Empresa_1.T_Codigo.Value  := oRow:fieldGet(1) 
+   Empresa_1.T_Nome.Value    := oRow:fieldGet(2)   
+   Empresa_1.T_Endereco.Value:= oRow:fieldGet(3)
+   Empresa_1.T_BAIRRO.Value  := oRow:fieldGet(4)
+   Empresa_1.T_Cidade.Value  := oRow:fieldGet(5) 
+   Empresa_1.T_Cep.Value     := oRow:fieldGet(6) 
+   Empresa_1.T_cgc.Value     := oRow:fieldGet(7) 
+   Empresa_1.T_Estado.Value  := oRow:fieldGet(8)
+   Empresa_1.T_Fone1.Value   := oRow:fieldGet(9)   
+   Empresa_1.T_Email.Value   := oRow:fieldGet(10)    
+   Empresa_1.T_Codigo.ENABLED:=.F. 
+   Empresa_1.T_Nome.ENABLED  :=.F.   
+endif   
+oQuery:Destroy()   
+return nil
+
+Procedure Salvar_Registro()
+LOCAL oQueryUp
+LOCAL cQuery
+LOCAL c_codigo:=Empresa_1.T_Codigo.Value
+
+cQuery:="UPDATE arqemp SET end='"+Empresa_1.T_Endereco.Value
+cQuery+="',bairro='"+Empresa_1.T_BAIRRO.Value
+cQuery+="',cidade='"+Empresa_1.T_Cidade.Value 
+cQuery+="',cep='"+Empresa_1.T_cep.Value   
+cQuery+="',cgc='"+Empresa_1.T_cgc.Value  
+cQuery+="',uf='"+Empresa_1.T_estado.Value 
+cQuery+="',tel='"+Empresa_1.T_fone1.Value    
+cQuery+="',email='"+Empresa_1.T_email.Value
+cQuery+="' where codigo='"+c_codigo+"'"
+oQueryUp:=oServer:Query(cQuery)
+
+msginfo("Atualizado com Exito")
+   
+Empresa_1.Release 
+Return 
+
+
+Function Sair_do_Form2()
+Empresa_1.Release
+Return 

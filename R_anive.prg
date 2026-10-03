@@ -1,0 +1,39 @@
+#include "minigui.ch"
+#include "winprint.ch"
+
+PROCEDURE RlAniver
+
+          Buscar:=''
+          m_mes:=space(02)
+
+          Buscar := Upper ( AllTrim ( InputBox( 'Informe Mes' , 'Pesquisa' ))) 
+          m_mes  := alltrim(Buscar)
+
+          alu->(dbsetorder(3))
+          alu->(ordScope(0,m_mes))
+          alu->(OrdScope(1,m_mes))
+          alu->(DbGoTop())
+          if m_mes == substr(dtoc(alu->DT_NASC),4,2)
+
+  	          DO REPORT ;
+                TITLE 'Aniversariantes do Mes';
+                HEADERS  {'','',''} , {'R. A.','Nome Aluno','Dt.Nascimento'};
+                FIELDS   {'alu->ra_aluno','alu->nome_alu','alu->DT_NASC'};
+		          WIDTHS   {10,30,10} 						;
+		          TOTALS   {.F.,.F.,.F.}					;
+		          WORKAREA alu						;
+		          lpp      55                   ;
+                cpl      77                   ;
+                lmargin  3                       ;
+                tmargin  3                     ;
+                papersize DMPAPER_A4          ;
+		          PREVIEW	                     ;
+		          nodatetimestamp			
+		    else
+		        msginfo("Não Existem Aniversariantes para o Mês("+m_mes+")")  
+		    endif
+		
+		    alu->(ordScope(0,nil))
+          alu->(ordScope(1,nil))	
+        
+Return

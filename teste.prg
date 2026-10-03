@@ -1,0 +1,52 @@
+#include "MiniGUI.ch"
+#include "winprint.ch"
+
+    
+FUNCTION MAIN
+      SET DELETED ON
+      SET CENTURY ON
+      SET EXCLUSIVE OFF
+      SET DATE BRIT
+      SET EPOCH TO 1920
+      SET CENTURY ON
+      SET DATE FORMAT TO "DD/MM/YYYY"
+      SET LANGUAGE TO PORTUGUESE      
+      Set Navigation Extended 
+      SET ShowDetailError ON
+      SET BROWSESYNC ON
+      DBCOMMITALL()
+
+      use cad_alu alias alu index IDCADAL3
+      
+      dt:=ctod("16/02/1965")
+      Buscar:=''
+      m_mes:=space(02)
+
+      Buscar := Upper ( AllTrim ( InputBox( 'Informe Mes' , 'Pesquisa' ))) 
+      m_mes  := alltrim(Buscar)
+
+      alu->(ordScope(0,m_mes))
+      alu->(OrdScope(1,m_mes))
+      alu->(DbGoTop())
+      if m_mes == substr(dtoc(alu->DT_NASC),4,2)
+
+  	      DO REPORT								;
+            TITLE 'Relatório de Aniversariantes do Mes';
+                  HEADERS  {'','',''} , {'R. A.','Nome Aluno','Dt.Nascimento'};
+                  FIELDS   {'alu->ra_aluno','alu->nome_alu','alu->DT_NASC'};
+		            WIDTHS   {10,30,10} 						;
+		            TOTALS   {.F.,.F.,.F.}					;
+		            WORKAREA alu						;
+		            LPP 50								;
+		            CPL 80								;
+		            LMARGIN 5							;
+		            PREVIEW	                     ;
+		            nodatetimestamp			
+		else
+		   msginfo("Não Existem Aniversariantes para o Mês("+m_mes+")")  
+		endif
+		
+		alu->(ordScope(0,nil))
+      alu->(ordScope(1,nil))	       
+Return
+ 

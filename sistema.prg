@@ -1,0 +1,701 @@
+#include "MiniGUI.ch"
+#include "winprint.ch"
+#ifndef __XHARBOUR__
+   #include "hbcompat.ch"
+#endif
+#define BM_WIDTH     1
+#define BM_HEIGHT    2
+******** jcssoft - 
+Static lGridFreeze := .t.
+Static CONTROLES   := .t.
+
+MEMVAR _BLUE,_YELLOW,_BLACK,_ROSA,_BLUE3
+MEMVAR _BLUE2,_YELLOW2,_BLUE5,_VERDE
+
+REQUEST descend
+    
+FUNCTION MAIN
+      SET DELETED ON
+      SET CENTURY ON
+      SET EXCLUSIVE OFF
+      SET DATE BRIT
+      SET EPOCH TO 1920
+      SET CENTURY ON
+      SET DATE FORMAT TO "DD/MM/YYYY"
+      SET LANGUAGE TO PORTUGUESE      
+      Set Navigation Extended 
+      SET ShowDetailError ON
+      SET BROWSESYNC ON
+      DBCOMMITALL()
+      
+      public VUSUARIO:=""
+		public PRM:=0    
+/*
+	use cad_alu exclusive
+	Index on str(cod_hor,6,2) to IDCADAL4
+	Dbcloseall()     
+*/	
+	   ARQPRINC() 
+    
+		USE ARQEMP ALIAS EMP NEW SHARED
+   	IF SUBSTR(EMP->DESCR,1,6) # "ESCOLA"
+		   MSGINFO("JCSoft - Cel.(11) 7378-8895","Sistema Danificado !!")
+	      DBCLOSEALL()
+	      EXIT PROGRAM
+	   ENDIF   
+		EMPRESA:=EMP->DESCR
+		USE
+     
+Define window Form_10 ;
+       At 0, 0 ;
+       WIDTH GetDesktopWidth() ;
+       HEIGHT GetDesktopHeight()-30; 
+       Title EMPRESA ;
+       MAIN ;
+       Icon 'gsk';
+       FONT 'ARIAL' SIZE 11 ;      
+	    ON INIT	( SENHA(), FORM_10.STATUSBAR.ITEM(2):="Usuario :"+VUSUARIO )    // CASO NECESSITE REORGANIZAR SEM INICIAR INIBIR ESTA LINHA
+		 		     	   	   	  
+       DEFINE BKGBRUSH newBrush PATTERN IN Form_10 BITMAP principe.jpg
+
+  Define main menu
+
+      Popup 'Cadastros'
+        Item 'Empresa         ' Action EMP() IMAGE 'BORRAR' MESSAGE "Cadastro da Empresa"
+        Separator
+        Item 'Turma           ' Action grupo(2) IMAGE "edit_edit" MESSAGE "Cadastro de Turma dos Alunos"
+        Separator
+        Item 'Cargos           ' Action cargo(5) IMAGE "button7" MESSAGE "Cadastro de Cargos dos Funcioários"
+        Separator
+        Item 'Médicos          ' Action medic(8) IMAGE "edit_new" MESSAGE "Cadastro de Médicos"
+        Separator
+        Item 'Funcionarios    ' Action clientes(3) IMAGE 'Clientes' MESSAGE 'Cadastro de Professores'
+        Separator 
+        Separator
+        Item 'Fim' Action EXIT PROGRAM Image 'edit_close'
+      End Popup
+
+      Popup 'Processos Diarios'
+            Separator        
+            Item 'Controle de Alunos ' Action principe(1) IMAGE 'contactos' MESSAGE 'Controle Geral de Alunos'     
+            Separator
+            Item 'Controle de Medico ' Action CTRMED(9) IMAGE "hp_gopage" MESSAGE 'Controle Medico dos Alunos'     
+            Separator
+            Item 'Controle de Observações ' Action CTROBS(6) IMAGE "edit_ok" MESSAGE 'Controle Observações dos Alunos'     
+      end popup
+
+      Popup 'Relatorios'
+        Item "&Aniversariantes do Mês" Action RlAniver() IMAGE "edit_print" MESSAGE "Relatório Aniversariantes do Mês"
+        Separator
+        Item "&Turmas " Action Rlturma() IMAGE "hbprint_option" MESSAGE "Relatório de Turma dos Alunos"
+
+      End Popup
+
+      Popup 'Utilitarios'
+      
+        Popup 'Senhas Usuarios ' 
+               ITEM 'Inclusão ' Action USUARIOS(1) IMAGE "Free" MESSAGE "Criar Usuario e Liberação"
+               ITEM 'Alteração' Action USUARIOS(2) IMAGE "info" MESSAGE "Alterar Liberações do Sistema"
+               ITEM 'Exclusão' Action USUARIOS(3) IMAGE "check" MESSAGE "Exclusão de Usuario e Suas Liberações"
+               ITEM 'Troca de Senha' Action USUARIOS(4) IMAGE "br_no" MESSAGE "Troca de Senha"
+  		  end popup
+        Item 'Transfere Foto para Sistema' Action Trans_foto() IMAGE "custos" MESSAGE "Copia a foto do aluno para o Sistema"  		  
+        Separator
+        Item 'Reorganizacao   ' Action REORGANIZA(0) IMAGE "info" MESSAGE "Reorganização de Arquivos Atualização de Indices"
+        Separator
+        Item 'Backup/Restauração' Action BACKUPJCS(0) IMAGE "check" MESSAGE "Backup Geral do Sistema / Restauração do Sistema"
+      End Popup                                                   
+
+      Popup 'Informações'
+
+        Item 'Desenvolvimento' Action MsgInfo ( "(OPEN SOURCE) Desevolvido por Joao Carlos de Souza| Analista Sistemas | Cel.:9.7378-8895 ",MiniGuiVersion() )
+
+      End Popup
+   End Menu
+
+		DEFINE STATUSBAR FONT 'MS Sans Serif' SIZE 9 
+			STATUSITEM ""
+			STATUSITEM "Usuario:" WIDTH 300
+			STATUSITEM "Versão 1.00" WIDTH 80
+			STATUSITEM 'JCSoft Sistemas - Cel:(11)7378-8895' WIDTH 200
+			CLOCK WIDTH 85
+			DATE 
+		END STATUSBAR
+
+      FORM_10.STATUSBAR.ITEM(2):="Usuario: " + VUSUARIO
+
+End Window
+
+Form_10.Center 
+Form_10.Activate 
+
+Return
+
+/*
+#include "EMPRESA.PRG"
+#include "SENHA.PRG"
+#include "INDICE.PRG"
+#include "JCSBACK.PRG"
+#include "USUARIOS.PRG"
+#include "turma.PRG"    
+#include "funciona.prg"
+#include "principe.prg"
+#include "cargos.prg"
+#include "tabmed.prg"
+#include "ctrmedi.prg"
+#include "ctrobsm.prg"
+*/
+                 
+************************
+PROCEDURE ARQPRINC
+************************
+****CRIA INDICES MATRIZES
+IF !FILE("IDJCS1.NTX")
+   USE JCSARQ EXCLUSIVE
+   INDEX ON NOMEU+STR(COD,5) TO IDJCS1
+   INDEX ON SENHAU+STR(COD,5) TO IDJCS2
+   USE
+
+   USE LANINDI EXCLUSIVE
+   INDEX ON STR(COD,5)+APELIDO+NINDE TO IDLINDC 
+   USE
+
+   USE INDICES EXCLUSIVE
+   INDEX ON STR(COD,5)+APELIDO TO IDINDIC 
+	USE
+
+   DBCLOSEALL()
+   
+ENDIF   
+RETURN NIL
+
+*****************************
+Function VERLIBERA(x_info)
+*****************************
+DO CASE 
+   CASE x_info==1 // CINCL=.F.
+        MSGINFO("Sem Liberação p/ Inclusão!!","Liberação de Modulos")
+	CASE x_info==2 // CALTE=.F.
+        MSGINFO("Sem Liberação p/ Alteração!!","Liberação de Modulos")
+	CASE x_info==3 // CEXCL=.F.
+        MSGINFO("Sem Liberação p/ Exclusão!!","Liberação de Modulos")
+	CASE x_info==4 // CIMPR=.F.
+        MSGINFO("Sem Liberação p/ Impressão!!","Liberação de Modulos")
+	CASE x_info==5 // ADM=.F.
+        MSGINFO("Sem Liberação como ADMINISTRADOR","Liberação de Modulos")     
+ENDCASE
+RETURN NIL	
+
+**********************************
+Function Libera_modulo()
+**********************************
+PARAMETERS LIBGSK
+IF JCS->(DBSEEK(VUsuario+STR(LIBGSK,5)))
+   CINCL:=JCS->INCLU
+	CALTE:=JCS->ALTEU 
+	CEXCL:=JCS->EXCLU 
+	CIMPR:=JCS->IMPRU
+	ADM  :=JCS->ADM
+ENDIF
+RETURN NIL
+
+************************
+procedure teste
+************************
+msgbox("Em Fase de Criação")
+return nil
+
+FUNCTION TREG
+
+TREGCOR:=SETCOLOR()
+PRIVATE LIN,COL
+LIN := ROW()
+COL := COL()
+*
+IF RLOCK()
+   RETURN (.T.) && Travado
+ENDIF
+*
+MSGINFO("REGISTRO EM MANUTENCAO - Tentando Novo Acesso, <ESC> Interrompe")
+DO WHILE LASTKEY() # 27 && Tentar Ate Travamento ou Digitacao <ESC>
+   IF !RLOCK()
+      MSGINFO("Registro Em Manutenção Tentando Acesso !!! ")
+      RETURN(.F.)
+   ELSEIF RLOCK()
+      RETURN (.T.) && Travado
+   ENDIF
+   INKEY(.5)
+ENDDO
+RETURN (.F.)
+
+
+/*
+ * MsgOptions([cText], [cTitle], [cImage], aOptions, [nDefaultOption], [nSeconds])
+*/
+
+Function MsgOptions(cText, cTitle, cImage, aOptions, nDefaultOption, nSeconds )
+   Local nItem:=0, nBtnWidth:=0, aBtn:=Array(Len(aOptions)), aImgInfo
+   Local nBtnPosX:=10, nBtnPosY:=85, cOption:=""
+
+   Default cText           To "SELECIONE UMA OPÇÃO"
+   Default cTitle          To "P E S Q U I S A "
+   Default cImage          To ""
+   Default nDefaultOption  To 1
+   Default nSeconds        To 0
+
+   DEFINE FONT _Font_Options FONTNAME "MS Sans Serif" SIZE 11
+
+   //Calcular anchura máxima de un botón para igualarlos todos
+   For nItem:=1 To Len(aOptions)
+      aOptions[nItem]:=Alltrim(aOptions[nItem])
+      nBtnWidth:=Max( GetTextWidth(, aOptions[nItem], GetFontHandle("_Font_Options")), nBtnWidth )
+   Next
+   nBtnWidth+=5
+
+   DEFINE WINDOW _Options  ;
+      AT 0,0               ;
+      WIDTH (Len(aOptions)*(10+nBtnWidth))+15 ;
+      HEIGHT 155           ;
+      TITLE cTitle         ;
+      ICON "BUSCAR.ICO"      ;
+      MODAL                ;
+      NOSIZE               ;
+      ON RELEASE IF( IsControlDefined( Timer_1, _Options ), _Options.Timer_1.Release, )
+
+      ON KEY ESCAPE ACTION _Options.Release
+
+      If !Empty(cImage)
+         aImgInfo := BmpSize(cImage)
+         If !Empty(aImgInfo [BM_WIDTH])
+           @ 20, 10 IMAGE _Image PICTURE (cImage) WIDTH aImgInfo [BM_WIDTH] HEIGHT aImgInfo [BM_HEIGHT]
+           @ 40, 55 LABEL _Label VALUE cText WIDTH (Len(aOptions)*(10+nBtnWidth))-50 HEIGHT 30 ;
+             TRANSPARENT CENTERALIGN FONT "_Font_Options"
+         Endif
+      Else
+           @ 40, 10 LABEL _Label VALUE cText WIDTH (Len(aOptions)*(10+nBtnWidth))-10 HEIGHT 30 ;
+             TRANSPARENT CENTERALIGN FONT "_Font_Options"
+      Endif
+
+      For nItem:=1 To Len(aOptions)
+         aBtn[nItem]:="_Btn_"+Ltrim(Str(nItem))
+         cOption:=aBtn[nItem]
+         @ nBtnPosY, nBtnPosX BUTTON &cOption CAPTION aOptions[nItem] WIDTH nBtnWidth HEIGHT 25 FONT "_Font_Options" ;
+                   ACTION ( cOption:=GetProperty("_Options", This.Name, "Caption"), _Options.Release )
+         nBtnPosX+=nBtnWidth+10
+      Next
+
+      DoMethod("_Options", aBtn[nDefaultOption], "SetFocus")
+
+      If nSeconds>0
+         DEFINE TIMER Timer_1 Interval nSeconds*1000  ;
+                ACTION ( cOption:=aOptions[nDefaultOption], _Options.Release )
+      Endif
+
+   END WINDOW
+
+   CENTER WINDOW _Options
+
+   ACTIVATE WINDOW _Options
+
+   RELEASE FONT _Font_Options
+
+Return Ascan(aOptions,Alltrim(cOption))
+
+/*
+ * MsgLogo(cImage, [nSeconds])
+*/
+
+Function MsgLogo( cImage, nSeconds, lRound )
+
+Local aImgInfo:=GetImageSize(cImage), width, height
+
+Default nSeconds To 5, lRound To .F.
+
+   If .Not. IsWindowDefined( _Logo ) .And. .Not. Empty( aImgInfo [BM_WIDTH] )
+
+      width :=aImgInfo [BM_WIDTH]+GetBorderWidth()
+      height:=aImgInfo [BM_HEIGHT]+GetBorderHeight()
+
+      DEFINE WINDOW _Logo   ;
+         AT 0,0             ;
+         WIDTH width        ;
+         HEIGHT height      ;
+         CHILD TOPMOST      ;
+         NOCAPTION          ;
+         ON SIZE (_Logo.Width:=width, _Logo.Height:=height) ;
+         ON MOUSECLICK _Logo.Release
+
+         @ 0, 0 IMAGE _Image PICTURE (cImage) WIDTH aImgInfo [BM_WIDTH] HEIGHT aImgInfo [BM_HEIGHT]
+
+         DEFINE TIMER Timer_1 INTERVAL nSeconds*1000 ACTION _Logo.Release
+
+      END WINDOW
+
+      If lRound
+         SET REGION OF _Logo ROUNDRECT 68,68,width,height
+      Endif
+
+      CENTER WINDOW _Logo
+
+      ACTIVATE WINDOW _Logo
+
+   Else
+      MsgInfo("No se ha podido llevar a cabo la operación", "Error")
+   Endif
+
+Return Nil
+
+*-------------------------------------------------------------
+Static Function GetImageSize( cImagePath )
+*-------------------------------------------------------------
+Local ObjImage, aRetArr:={0,0}
+
+   If FILE( GetStartUpFolder() + '\ximage.dll' )
+
+	objImage := CreateObject( "XStandard.Image" )
+
+	if objImage:Load( cImagePath ) == .T.
+		aRetArr[1] := objImage:Width
+		aRetArr[2] := objImage:Height
+	endif
+
+	objImage := NIL
+
+   Endif
+
+Return aRetArr
+
+*-------------------------------------------------------------
+Static Function UnRegXImage()
+*-------------------------------------------------------------
+
+	If FILE( GetStartUpFolder() + '\ximage.dll' )
+		EXECUTE FILE "regsvr32" PARAMETERS "/u /s XImage.dll" HIDE
+	Endif
+
+Return Nil
+
+/*
+ * MsgDesktop([cText], [cTitle], [cImage], [lFlash])
+*/
+
+Function PegaValorDaColuna( xObj, xForm, nCol)
+	 Local nPos := GetProperty ( xForm , xObj , 'Value' )
+	 Local aRet := GetProperty ( xForm , xObj , 'Item' , nPos )
+Return aRet[nCol]	
+
+FUNCTION OPAQ
+PARAMETERS ARQ,MOD
+IF .NOT. RIGHT(ARQ,3) = 'DBF'
+   ARQ:=ARQ+".DBF"
+ENDIF
+IF .NOT.FILE(ARQ)
+   TONE(500,3)
+   MSGINFO("Arquivo "+"("+ARQ+")"+" Inexistente !!!")
+   RETURN (.F.)
+ENDIF
+IF MOD = 1
+   USE &ARQ. EXCLUSIVE
+   IF NETERR()
+      MSGINFO("Abertura Exclusiva "+"("+ARQ+")"+" Negada !!!")
+      RETURN (.F.)
+   ENDIF
+ELSE
+   USE &ARQ.
+   IF NETERR()
+      MSGINFO("Abertura Compartilhada "+"("+ARQ+")"+" Negada !!!")
+      RETURN (.F.)
+   ENDIF
+ENDIF
+RETURN (.T.)
+
+FUNCTION MESES
+PARAMETERS VDTAD
+M:=SUBSTR(DTOC(VDTAD),4,2)
+VINIC:=IF(M="01","JANEIRO",IF(M="02","FEVEREIRO",IF(M="03","MARCO",IF(M="04","ABRIL",IF(M="05","MAIO"," ")))))
+IF VINIC=" "
+   VINIC:=IF(M="06","JUNHO",IF(M="07","JULHO",IF(M="08","AGOSTO",IF(M="09","SETEMBRO",IF(M="10","OUTUBRO",IF(M="11","NOVEMBRO",IF(M="12","DEZEMBRO"," ")))))))
+ENDIF
+RETURN VINIC
+
+
+Func  EXTENSO(nValor,nTamI)
+nTam:=nTamI
+
+aUNIDADE :={"UM",;
+           "DOIS",;
+           "TRES",;
+           "QUATRO",;
+           "CINCO",;
+           "SEIS",;
+           "SETE",;
+           "OITO",;
+           "NOVE",;
+           "DEZ ",;
+           "ONZE",;
+           "DOZE",;
+           "TREZE",;
+           "QUATORZE",;
+           "QUINZE",;
+           "DEZESSEIS",;
+           "DEZESETE",;
+           "DEZOITO",;
+           "DEZENOVE",}
+
+aDEZENA :={"DEZ",;
+           "VINTE",;
+          "TRINTA",;
+          "QUARENTA",;
+          "CINQUENTA",;
+          "SESSENTA",;
+          "SETENTA",;
+          "OITENTA",;
+          "NOVENTA",;
+          "CEM"}
+
+aCENTENA :={"CENTO",;            
+           "DUZENTOS",;
+           "TREZENTOS",;
+           "QUATROCENTOS",;
+           "QUINHENTOS",;
+           "SEISCENTOS",;
+           "SETECENTOS",;
+           "OITOCENTOS",;
+           "NOVECENTOS"}
+          
+
+nLinha:=1
+aExt:={}
+
+/*
+
+   Centena dos Bilhoes
+*/
+
+              If  Val(Subst(Str(nValor,15,2),1,3) ) > 0
+                  
+                  If Val(Subst(Str(nValor,15,2),1,3) ) = 1
+                     
+                     Anexa(Descr(1,nValor))
+                     Anexa(" BILHAO ")
+                     Anexa(If(Val(Subst(Str(nValor,15,2),4,9))=0," DE REAIS, ",", "))
+                     
+                  Else
+                      
+                     Anexa(Descr(1,nValor))
+                     Anexa(" BILHOES ")
+                     Anexa(If(Val(Subst(Str(nValor,14,2),4,9))=0," DE REAIS, ",", "))
+                     
+                  End
+
+              End
+
+/*
+  Centena dos Milhoes
+*/
+
+              If  Val(Subst(Str(nValor,15,2),4,3) ) > 0
+                    
+                  If Val(Subst(Str(nValor,15,2),4,3) ) = 1
+                     
+                     Descr(4,nValor)
+                     Anexa(" MILHAO")
+                     Anexa(If(Val(Subst(Str(nValor,15,2),7,6))=0," DE REAIS, ",", "))
+                  
+                  Else
+                     
+                     Descr(4,nValor)
+                     Anexa(" MILHOES")
+                     Anexa(If(Val(Subst(Str(nValor,15,2),7,6))=0," DE REAIS, ",", "))
+                  
+                  End
+              
+              End
+
+/*              
+  
+  Milhar dos Reais
+
+*/
+
+              If  Val(Subst(Str(nValor,15,2),7,3)) > 0
+                                      
+                    Descr(7,nValor)
+                    Anexa(" MIL")
+                    Anexa(If(Val(Subst(Str(nValor,15,2),10,3))=0," REAIS ",", "))
+              
+              End
+
+/*              
+  
+  Centena dos Reais
+
+*/
+
+              If  Val(Subst(Str(nValor,15,2),10,3) ) > 0
+                    
+                    Descr(10,nValor)
+                    Anexa(If(Val(Subst(Str(nValor,15,2),1,12))=1," REAL"," REAIS"))
+
+              End 
+
+
+/*
+   Centavos
+*/
+              If Val((Right(Str(nValor,15,2),2) )) > 0
+                 
+                 If Val(Subst(Str(nValor,15,2),1,12)) > 0
+                    
+                    Anexa(" E ")
+          
+                 End
+
+                 If  Val((Right(Str(nValor,15,2),2) )) <= 19
+
+                    Anexa( aUnidade[Val(Right(Str(nValor,15,2),2))] )
+          
+                 Else
+             
+                    Anexa( aDezena[Val(Subst(Right(Str(nValor,15,2),2),1,1))] )
+                    
+                    If Val(Subst(Right(Str(nValor,15,2),2),2,1)) > 0
+                       
+                       Anexa(" E ")
+                       Anexa( aUnidade[Val(Subst(Right(Str(nValor,15,2),2),2,1))] )
+                    
+                    End
+                 
+                 End
+
+                 Anexa( If(Val(Subst(Str(nValor,15,2),14,2)) = 1," CENTAVO"," CENTAVOS") )
+              
+              End
+
+              aExt[nLinha]:=aExt[nLinha]+")"
+
+              Return aExt
+
+
+Static Func Descr(nPos,nValor)                       
+     
+          If  Val(Subst(Str(nValor,15,2),nPos,1)) != 0 
+
+              If Val(Subst(Str(nValor,15,2),nPos,3)) = 100
+
+                 Anexa(aDezena[10])
+        
+              Else
+
+                 Anexa(aCentena[Val(Subst(Str(nValor,15,2),nPos,1))])
+        
+              End
+
+              If Val(Subst(Str(nValor,15,2),++nPos,2)) != 0
+           
+                 Anexa(" E ")
+        
+              End            
+        
+              --nPos
+     
+          End
+                    
+          If Val(Subst(Str(nValor,15,2),++nPos,2)) != 0
+
+             If Val(Subst(Str(nValor,15,2),nPos,2)) <= 19
+
+                Anexa(aUnidade[Val(Subst(Str(nValor,15,2),nPos,2))])
+              
+             Else
+
+                Anexa(aDezena[Val(Subst(Str(nValor,15,2),nPos,1))])
+           
+                If Val(Subst(Str(nValor,15,2),++nPos,1)) != 0
+
+                   Anexa(" E ")
+                   Anexa(aUnidade[Val(Subst(Str(nValor,15,2),nPos,1))])
+                
+                End
+
+             End
+          
+          End
+
+     Return 
+
+
+Static Proc Anexa(cLinha)
+           
+       If !Empty(aExt)
+          
+          If Len(aExt[nLinha])+Len(cLinha) > nTam
+
+             ++nLinha
+             
+             AADD(aExt,clinha)
+
+          Else
+             
+             aExt[nLinha]:=aExt[nlinha]+cLinha
+          
+          End
+       
+       Else
+
+          AADD(aExt,"("+clinha)
+       
+       End   
+     
+       Return
+
+
+Func Protecao(dDataI,dDataF)
+     
+     LOCAL dAux
+
+     If dDataf != NIL
+        dAux := dDataI
+        
+     Else
+
+        dDataf := dDataI
+        dAux   := dDataI
+        
+     End
+
+     Do while dAux <= dDataf
+
+        If Prot->( DBSeek(dAux) )
+              
+           If Prot->Status
+                 
+              If Prot->Tipo = "P" .And. AllTrim(cUsuario)=Prot->User
+                    
+                 Return .T.
+               
+              End
+              
+              ALERT("Acesso nao permitido, Data protegida.")
+              Return .F.
+              
+           End
+           
+        End
+
+     dAux := dAux +1
+     End
+     
+     Return .T.
+
+
+FUNCTION Shadow( nTop, nLeft, nBottom, nRight )
+   LOCAL nShadowLen, cShadow
+
+   cShadow := SAVESCREEN( nTop, nLeft, nBottom, nRight )
+   nShadowLen := LEN(cShadow)
+   
+   RESTSCREEN( nTop, nLeft, nBottom, nRight,;
+               TRANSFORM(cShadow, REPLICATE("X" + CHR(7), nShadowLen)))
+   RETURN (.T.)
+

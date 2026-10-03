@@ -1,0 +1,1184 @@
+#include "MiniGUI.ch"
+#include "hmg.ch"
+
+Function principe                                  
+
+x_resp:=0
+
+DEFINE WINDOW Aluno_1 ;
+	AT 0,0 ;
+	WIDTH GetDesktopWidth() ;
+   HEIGHT GetDesktopHeight()-30; 
+	TITLE 'Cadastro de Alunos' ;
+	child ;
+	FONT "Arial" SIZE 10;
+	ON INIT (AbrirAluno(),DesativaGet())
+	
+   //DEFINE SPLITBOX 
+
+		DEFINE TOOLBAR ToolBar_1 BUTTONSIZE 75,35 FLAT BORDER
+
+			BUTTON PRIMERO 		;
+				CAPTION '&Primero' 	;
+				PICTURE 'primero'	;
+				ACTION If(Aluno_1.Browse_1.value=1,MsgBox("Inicio do Arquivo"),Aluno_1.Browse_1.value:=1)
+		
+			BUTTON ANTERIOR 	;
+				CAPTION '&Anterior' 	;
+				PICTURE 'anterior'	;
+				ACTION If(Aluno_1.Browse_1.value>1,Aluno_1.Browse_1.value:=Aluno_1.Browse_1.value-1,MsgInfo("Inicio de Dados"))
+
+			BUTTON SIGUIENTE	;
+				CAPTION '&Proximo' 	;
+				PICTURE 'siguiente'	;
+				ACTION (Aluno_1.Browse_1.value:=Aluno_1.Browse_1.value+1)
+
+			BUTTON ULTIMO 		;
+				CAPTION '&Ultimo' 	;
+				PICTURE 'ultimo'	;
+				ACTION (Aluno_1.Browse_1.value:=nCounter)  SEPARATOR
+
+			BUTTON BUSCAR 		;
+				CAPTION '&Pesquisa' 	;
+				PICTURE 'buscar'	;
+				ACTION Buscar_RA()
+
+			BUTTON Nuevo 		;
+				CAPTION '&Novo' 	;
+				PICTURE 'nuevo'	;
+				ACTION ( Aluno_1.Nuevo.enabled:=.t.,Aluno_1.EDITAR.enabled:=.F.,Inclusao_Ra())
+
+			BUTTON EDITAR 		;
+				CAPTION 'A&lterar' 	;
+				PICTURE 'editar'	;
+				ACTION ( Aluno_1.Nuevo.enabled:=.F.,Aluno_1.EDITAR.enabled:=.T.,AtivaGet())
+
+			BUTTON ELIMINAR 	;
+				CAPTION 'De&letar'	;
+				PICTURE 'borrar'	;
+				ACTION (MostraGet(),EliminaGet()) 
+
+			BUTTON IMPRIMIR 	;
+				CAPTION '&Imprimir'	;
+				PICTURE 'imprimir2' ;
+            ACTION (Imprimir_RA(PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)))
+
+			BUTTON CERRAR 	;
+				CAPTION '&Fecha'	;
+				PICTURE 'cerrar' ;
+            ACTION Aluno_1.release 
+
+		END TOOLBAR
+
+      @ 70,10 Grid Browse_1				;
+			     WIDTH 300  				;
+              HEIGHT 300                              ; 
+			     HEADERS { 'RA' ,'Nome do Aluno' }	;
+			     WIDTHS { 90, 200 }			;
+			     ON CHANGE MostraGet() ;
+			     ON DBLCLICK ( AtivaGet() , DesativaGet() )
+ 
+              @ 70,320 LABEL _RA ;
+                       VALUE 'R A'    ;
+                       WIDTH 40           ;
+                       HEIGHT 30           
+
+              @ 70,430 LABEL _mtrg ;
+                       VALUE 'Matricula'   ;
+                       WIDTH 100           ;
+                       HEIGHT 30 
+							                                                
+              @ 70,560 LABEL _nome ;
+                       VALUE 'Nome do Aluno'    ;
+                       WIDTH 120           ;
+                       HEIGHT 30           
+
+              @ 70,810 LABEL _dtnas ;
+                       VALUE 'Dt.Nascimento'    ;
+                       WIDTH 120           ;
+                       HEIGHT 30    
+							                         
+              @ 70,940 LABEL _sexo ;
+                       VALUE 'Sexo'    ;
+                       WIDTH 80           ;
+                       HEIGHT 30    
+
+              @ 70,1050 LABEL _dtsaid;
+                       VALUE 'Dt.Saida'    ;
+                       WIDTH 120           ;
+                       HEIGHT 30    
+							                         
+              @ 130,320 LABEL _end ;
+                       VALUE 'Endereço'    ;
+                       WIDTH 100           ;
+                       HEIGHT 30      
+
+              @ 130,700 LABEL _bai ;
+                       VALUE 'Bairro'    ;
+                       WIDTH 50           ;
+                       HEIGHT 30
+
+              @ 130,940 LABEL _Turma ;
+                       VALUE 'Turma'    ;
+                       WIDTH 80           ;
+                       HEIGHT 30 
+							     
+              @ 185,320 LABEL _Cid ;
+                       VALUE 'Cidade'    ;
+                       WIDTH 80           ;
+                       HEIGHT 30      
+
+              @ 185,500 LABEL _cep;
+                       VALUE 'Cep'    ;
+                       WIDTH 40           ;
+                       HEIGHT 30
+                       
+              @ 185,610 LABEL _cpf;
+                       VALUE 'CPF'    ;
+                       WIDTH 40           ;
+                       HEIGHT 30
+
+              @ 185,770 LABEL _rgaf;
+                       VALUE 'R.G.'    ;
+                       WIDTH 40           ;
+                       HEIGHT 30
+                       
+              @ 185,940 LABEL _PROF;
+                       VALUE 'Professor';
+                       WIDTH 90           ;
+                       HEIGHT 30
+
+              @ 250,320 LABEL _fone;
+                       VALUE '<<<<     T e l e f o n e s   U t e i s     >>>>'  ;
+                       WIDTH 600    ;
+                       HEIGHT 30    ;
+                       FONT "Arial black" SIZE 11
+                       
+              @ 90,320 TEXTBOX N_RA;
+                       OF Aluno_1 ; 
+		                 WIDTH 90;
+                       TOOLTIP 'Informe Numero do R A' ;
+                       numeric ;
+                       MAXLENGTH 10 ;
+                       ON ENTER ( Checa_Ra(Aluno_1.N_RA.Value) )
+
+              @ 90,430 DATEPICKER D_dtentr;
+				           on enter Aluno_1.C_nome.setfocus 
+				           
+              @ 90,560 TEXTBOX C_nome;
+                       OF Aluno_1 ;
+		                 WIDTH 240;
+                       TOOLTIP 'Informe Nome do Aluno' ;
+                       MAXLENGTH 30 ;
+                       uppercase    ;
+                       on lostfocus IF(empty(Aluno_1.C_nome.Value),(Msginfo("Campo Obrigatorio Não Pode estar em Branco","ATENÇÃO"),Aluno_1.C_nome.Setfocus),.f.)
+
+              @ 90,810 DATEPICKER D_dtnas ;
+				           on enter Aluno_1.C_sexo.setfocus 
+
+		        @ 90,940 COMBOBOX C_sexo;
+                      OF Aluno_1 ;
+		                WIDTH 90 ;
+				  			 ITEMS {"Masculino","Feminino"} ;
+							 VALUE 1 ;
+			             ON ENTER Aluno_1.D_dtsaid.SETFOCUS  
+
+              @ 90,1050 DATEPICKER D_dtsaid;
+				           on enter Aluno_1.C_end.setfocus 
+/*				           
+               DEFINE DATEPICKER D_dtsaid
+                      ROW 90
+                      COL 1050
+                      WIDTH 120
+                      HEIGHT 24
+                      SHOWNONE .T. // .F. COM .T., ACEITA-SE DATA EM BRANCO ... 
+                      DATEFORMAT "DD/MM/YYYY"
+               END DATEPICKER
+*/					       
+              @150,320 TEXTBOX C_END;
+                       OF Aluno_1 ;
+		                 WIDTH 320;
+                       TOOLTIP 'Informe Endereço do Aluno' ;
+                       MAXLENGTH 40 ;
+                       uppercase							  			                       
+
+              @150,700 TEXTBOX C_bai;
+                       OF Aluno_1 ;
+		                 WIDTH 200;
+                       TOOLTIP 'Informe Bairro do Aluno' ;
+                       MAXLENGTH 20 ;
+                       uppercase
+                       
+        		  @150,940 COMBOBOX T_turma;
+        		           OF Aluno_1 ;
+        		           WIDTH 300 ;
+							  HEIGHT 120 ; 
+        		           ITEMS {}
+
+              @210,320 TEXTBOX C_cid;
+                       OF Aluno_1 ;
+		                 WIDTH 170;
+                       TOOLTIP 'Informe Cidade do Aluno' ;
+                       MAXLENGTH 20 ;
+                       uppercase      
+							  
+              @210,500 TEXTBOX C_cep;
+                       OF Aluno_1 ;
+		                 WIDTH 100;
+		                 TOOLTIP 'Informe Cep do Aluno' ;
+                       INPUTMASK '99999-999'
+							  
+              @210,610 TEXTBOX C_cpf;
+                       OF Aluno_1 ;
+		                 WIDTH 150;
+		                 INPUTMASK '999.999.999.99'
+
+              @210,770 TEXTBOX C_rgalu;
+                       OF Aluno_1 ;
+		                 WIDTH 150
+		                 
+        		  @210,940 COMBOBOX T_profe;
+        		           OF Aluno_1 ;
+        		           WIDTH 300 ;
+							  HEIGHT 120  ; 
+        		           ITEMS {}
+								 								         
+              @280,320 TEXTBOX C_fone1;
+                       OF Aluno_1 ;
+		                 WIDTH 250
+        
+              @280,630 TEXTBOX C_fone2;
+                       OF Aluno_1 ;
+		                 WIDTH 250
+
+              DEFINE IMAGE FotoRa
+                     ROW    230
+                     COL    940
+                     WIDTH  200
+                     HEIGHT 190
+                     PICTURE ""
+                     HELPID   NIL
+                     VISIBLE  .T.
+                     STRETCH  .F.
+                     ACTION   NIL
+              END IMAGE							  						                
+    
+	           @330,350 BUTTON Btn_Scli Of Aluno_1	;
+                       CAPTION '&Salva Aluno'             ;
+                       ACTION (Grava_Ra(),Ativar_Get_rep());
+                       WIDTH 150 HEIGHT 27   ;                                 
+                       TOOLTIP "Salvar Cadastro do Aluno" ;
+                    FLAT
+
+	           @330,580 BUTTON Btn_Ccli Of Aluno_1	;
+		                 CAPTION '&Cancelar'		;
+                       ACTION CancelaGet() ;
+			              WIDTH 120 HEIGHT 27		;
+                       TOOLTIP "Cancelar Operação"	;
+			           FLAT
+
+              @390,010 FRAME Frame_Z ;
+                       CAPTION  " Cadastro dos Responsáveis" ;
+							  WIDTH 800 ;
+							  HEIGHT 190 ;
+							  FONT 'ARIAL' SIZE 14
+							  
+              @ 430,015 LABEL _fil;
+                       VALUE 'Parentesco'    ;
+                       WIDTH 80           ;
+                       HEIGHT 30							  						 
+
+              @ 430,230 LABEL _rpm     ;
+                       VALUE 'Nome '  ;
+                       WIDTH 40           ;
+                       HEIGHT 30		
+
+              @ 430,540 LABEL _prio      ;
+                       VALUE 'Prioridade'  ;
+                       WIDTH 80           ;
+                       HEIGHT 30		
+                       
+              @ 430,700 LABEL _respcr    ;
+                       VALUE 'Responsável'  ;
+                       WIDTH 100           ;
+                       HEIGHT 30	
+
+              @ 480,015 LABEL _EndP    ;
+                       VALUE 'Endereço'  ;
+                       WIDTH 80           ;
+                       HEIGHT 30		                       
+
+              @ 480,340 LABEL _baiP    ;
+                       VALUE 'Bairro'  ;
+                       WIDTH 80           ;
+                       HEIGHT 30		      
+
+              @ 480,560 LABEL _Cidp    ;
+                       VALUE 'Cidade'  ;
+                       WIDTH 80           ;
+                       HEIGHT 30	
+
+              @ 480,700 LABEL _Cepp    ;
+                       VALUE 'Cep'  ;
+                       WIDTH 40           ;
+                       HEIGHT 30								  
+
+              @ 530,015 LABEL _Profip    ;
+                       VALUE 'Profissão'  ;
+                       WIDTH 100           ;
+                       HEIGHT 30				
+                       
+              @ 530,340 LABEL _fone1p    ;
+                       VALUE 'Telefone'  ;
+                       WIDTH 100           ;
+                       HEIGHT 30			                       
+                       
+              @ 530,480 LABEL _fone2p    ;
+                       VALUE 'Telefone'  ;
+                       WIDTH 100           ;
+                       HEIGHT 30	
+							  		  
+              @ 450,015 TEXTBOX C_FILIACAO;
+                       OF Aluno_1 ;
+		                 WIDTH 200;
+                       TOOLTIP 'Informe Parentesco' ;
+                       MAXLENGTH 30 ;
+                       uppercase    
+
+              @ 450,230 TEXTBOX C_NOME_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 260;
+                       TOOLTIP 'Informe Nome do Responsavel' ;
+                       MAXLENGTH 30 ;
+                       uppercase    ;
+                       on lostfocus IF(empty(Aluno_1.C_NOME_RESP.Value),(Msginfo("Campo Obrigatorio Não Pode estar em Branco","ATENÇÃO"),Aluno_1.C_NOME_RESP.Setfocus),.f.)
+
+		        @ 450,540 COMBOBOX c_PRIO_RESP;
+                      OF Aluno_1 ;
+		                WIDTH 90 ;
+				  			 ITEMS {"Alta","Media","Baixa"} ;
+							 VALUE 1 ;
+			             ON ENTER Aluno_1.C_RESP_CRIA.SETFOCUS  
+
+              @ 450,700 COMBOBOX C_RESP_CRIA;
+                      OF Aluno_1 ;
+		                WIDTH 90 ;
+				  			 ITEMS {"Sim","Não"} ;
+							 VALUE 1 ;
+			             ON ENTER Aluno_1.C_END_RESP.SETFOCUS
+
+              @500,015 TEXTBOX C_END_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 320;
+                       TOOLTIP 'Informe Endereço do Responsavel' ;
+                       MAXLENGTH 40 ;
+                       uppercase	
+
+              @500,340 TEXTBOX C_BAI_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 200;
+                       TOOLTIP 'Informe Bairro do Responsavel' ;
+                       MAXLENGTH 40 ;
+                       uppercase	
+
+              @500,560 TEXTBOX C_CID_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 130;
+                       TOOLTIP 'Informe Cidade do Responsavel' ;
+                       MAXLENGTH 40 ;
+                       uppercase	
+
+              @500,700 TEXTBOX C_CEP_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 100;
+		                 TOOLTIP 'Informe Cep do Aluno' ;
+                       INPUTMASK '99999-999'
+
+              @550,015 TEXTBOX C_PROF_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 300 ;
+                       MAXLENGTH 40 ;
+                       uppercase	
+                       
+              @550,340 TEXTBOX C_FONE1_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 120;
+		                 INPUTMASK '(99)9.9999-9999'                    
+
+              @550,480 TEXTBOX C_FONE2_RESP;
+                       OF Aluno_1 ;
+		                 WIDTH 120;
+		                 INPUTMASK '(99)9.9999-9999' 
+		                 
+              @580,015 GRID G_Parente ;
+                       OF Aluno_1 ;
+                 	      WIDTH 800 ;
+		              	   HEIGHT 120 ;
+			               HEADERS { 'Parentesco', 'Nome','Telefone 1','Telefone 2','Prioridade','Responsável'} ;
+			               WIDTHS {100,180,150,150,120,120} ;
+								TOOLTIP "Para Corrigir Lançamento Clik no Mesmo" ;		
+                	      BACKCOLOR YELLOW    ;
+			               FONTCOLOR BLUE  ;
+			               FONT 'ARIAL' SIZE 09 ; 
+			               ON DBLCLICK ( Altera_G_P()) 
+
+              @550,820 FRAME Frame_Med ;
+                       CAPTION  " Controle Médico" ;
+							  WIDTH 500 ;
+							  HEIGHT 190 ;
+							  FONT 'ARIAL' SIZE 14   
+
+              @580,835 GRID G_medicos ;
+                       OF Aluno_1 ;
+                 	      WIDTH 490 ;
+		              	   HEIGHT 120 ;
+			               HEADERS { 'Medico', 'Dt.Exame','Descrição','Obs.Medicas','Dt.Ret.','Obs.Retorno'} ;
+			               WIDTHS {100,90,150,150,100,100} ;		
+                	      BACKCOLOR YELLOW    ;
+			               FONTCOLOR BLUE    ;
+			               FONT 'ARIAL' SIZE 09 
+
+              @400,820 FRAME Frame_obs ;
+                       CAPTION  " Observações" ;
+							  WIDTH 500 ;
+							  HEIGHT 190 ;
+							  FONT 'ARIAL' SIZE 12   
+
+              @420,835 GRID G_obse_alu ;
+                       OF Aluno_1 ;
+                 	      WIDTH 490 ;
+		              	   HEIGHT 130 ;
+			               HEADERS { 'Data', 'Observações'} ;
+			               WIDTHS {100,300} ;		
+                	      BACKCOLOR YELLOW    ;
+			               FONTCOLOR BLUE  ;
+								FONT 'ARIAL' SIZE 09  
+							  		                 
+	           @550,630 BUTTON Btn_SResp Of Aluno_1	;
+                       CAPTION '&Salva'             ;
+                       ACTION (Grava_Resp(x_resp)) ;
+                       WIDTH 70 HEIGHT 27   ;                                 
+                       TOOLTIP "Salvar Cadastro do Responsavel" ;
+                    FLAT
+
+	           @550,720 BUTTON Btn_Cresp Of Aluno_1	;
+		                 CAPTION '&Cancelar'		;
+                       ACTION CancelaGet() ;
+			              WIDTH 80 HEIGHT 27		;
+                       TOOLTIP "Cancelar Operação"	;
+			           FLAT
+       //END SPLITBOX
+		 						  		                 
+   END WINDOW
+
+   Aluno_1.Browse_1.SetFocus  
+   
+	Aluno_1.CENTER
+
+	Aluno_1.ACTIVATE  
+	
+Return Nil
+
+*------------------------------------------------------------------------------*
+PROCEDURE AbrirAluno()
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+
+DELETE ITEM ALL FROM Browse_1 Of Aluno_1
+
+oQuery := oServer:Query( "Select ra_aluno,nome_alu From escola.cad_alu ORDER BY RA_ALUNO" )
+ 
+For i := 1 To oQuery:LastRec()
+    nCounter++
+    oRow := oQuery:GetRow(i)
+    ADD ITEM { oRow:fieldGet(1),oRow:fieldGet(2)} TO Browse_1 Of Aluno_1
+    oQuery:Skip(1)
+Next
+oQuery:Destroy()
+Aluno_1.Browse_1.value:=1  
+Aluno_1.Browse_1.SetFocus  
+G_Turmas()
+G_Prof()
+//MostraGet()
+Return 
+*------------------------------------------------------------------------------*
+PROCEDURE G_Turmas()
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+
+Aluno_1.T_turma.deleteallitems
+
+oQuery := oServer:Query( "Select codpro,despro,hinc,hfim From escola.turma ORDER BY despro" )
+ 
+For i := 1 To oQuery:LastRec()
+    nCounter++
+    oRow := oQuery:GetRow(i)
+    ADD item (str(oRow:fieldGet(1),6,2)+"|"+substr(oRow:fieldGet(2),1,10)+"|"+oRow:fieldGet(3)+"|"+oRow:fieldGet(4)) TO T_turma Of Aluno_1
+    oQuery:Skip(1)
+Next
+oQuery:Destroy()
+Aluno_1.T_turma.Value := 1
+Return
+
+*------------------------------------------------------------------------------*
+PROCEDURE G_Prof()
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+
+Aluno_1.T_profe.deleteallitems
+oQuery := oServer:Query( "Select Fanta From escola.cliente ORDER BY Fanta" )
+ 
+For i := 1 To oQuery:LastRec()
+    nCounter++
+    oRow := oQuery:GetRow(i)
+    ADD item oRow:fieldGet(1) TO T_profe Of Aluno_1
+    oQuery:Skip(1)
+Next
+oQuery:Destroy()
+Aluno_1.T_profe.Value := 1
+Return
+*------------------------------------------------------------------------------*
+PROCEDURE DesativaGet()
+*------------------------------------------------------------------------------*
+Aluno_1.N_RA.Enabled:=.F.
+Aluno_1.C_nome.Enabled:=.F.
+Aluno_1.D_dtnas.Enabled:=.F.
+Aluno_1.D_dtentr.Enabled:=.F.
+Aluno_1.D_dtsaid.Enabled:=.F.
+Aluno_1.C_sexo.Enabled:=.F.
+Aluno_1.C_CPF.Enabled:=.F.
+Aluno_1.C_END.Enabled:=.F.
+Aluno_1.C_BAI.Enabled:=.F.
+Aluno_1.C_CID.Enabled:=.F.
+Aluno_1.C_CEP.Enabled:=.F.
+Aluno_1.C_FONE1.Enabled:=.F.
+Aluno_1.C_FONE2.Enabled:=.F. 
+Aluno_1.T_turma.Enabled:=.F.  
+Aluno_1.T_profe.Enabled:=.F.
+Aluno_1.C_rgalu.Enabled:=.F.
+DesativaGet_rep()
+Aluno_1.ToolBar_1.Enabled:=.T.
+Aluno_1.Btn_Ccli.Enabled:=.f.
+Aluno_1.Btn_Scli.Enabled:=.f.
+Aluno_1.Browse_1.SetFocus
+RETURN
+*------------------------------------------------------------------------------*
+PROCEDURE AtivaGet()
+*------------------------------------------------------------------------------*
+Aluno_1.N_RA.Enabled:=Aluno_1.Nuevo.enabled
+Aluno_1.C_nome.Enabled:=.t.
+Aluno_1.D_dtnas.Enabled:=.T.
+Aluno_1.D_dtentr.Enabled:=.t.
+Aluno_1.D_dtsaid.Enabled:=.t.
+Aluno_1.C_sexo.Enabled:=.T.
+Aluno_1.C_CPF.Enabled:=.T.
+Aluno_1.C_END.Enabled:=.T.
+Aluno_1.C_BAI.Enabled:=.T.
+Aluno_1.C_CID.Enabled:=.T.
+Aluno_1.C_CEP.Enabled:=.T.
+Aluno_1.C_FONE1.Enabled:=.T.
+Aluno_1.C_FONE2.Enabled:=.T.
+Aluno_1.Btn_Ccli.Enabled:=.T.
+Aluno_1.Btn_Scli.Enabled:=.T. 
+Aluno_1.T_turma.Enabled:=.t. 
+Aluno_1.T_profe.Enabled:=.t.
+Aluno_1.C_rgalu.Enabled:=.t.
+Aluno_1.N_RA.SETFOCUS
+Aluno_1.N_RA.refresh
+RETURN NIL
+*------------------------------------------------------------------------------*
+PROCEDURE CancelaGet()
+*------------------------------------------------------------------------------*
+Aluno_1.Nuevo.enabled:=.t.
+Aluno_1.EDITAR.enabled:=.t.
+Desativaget()
+MostraGet()
+RETURN
+*------------------------------------------------------------------------------*
+PROCEDURE Grava_Ra()
+*------------------------------------------------------------------------------*
+LOCAL oQueryUp
+LOCAL cQuery
+LOCAL c_codigo:=PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)
+
+If Aluno_1.nuevo.enabled == .T.
+   cQuery:="INSERT INTO escola.cad_alu (RA_ALUNO,CPF_ALU,DT_NASC,SEXO_ALU,END_ALU,BAI_ALU,"
+   cQuery+="CID_ALU,CEP_ALU,FONE_1,FONE_2,NOME_ALU,COD_HOR,PROF_RESP,DTENTR,DTSAID,RG_ALU)"
+   cQuery+=" values ('"+strzero(Aluno_1.N_RA.Value,10)+"','"+Aluno_1.C_CPF.Value+"','"+dtos(Aluno_1.D_dtnas.Value)
+   cQuery+="','"+str(Aluno_1.C_sexo.Value,1)+"','"+Aluno_1.C_END.Value+"','"+Aluno_1.C_BAI.Value
+   cQuery+="','"+Aluno_1.C_CID.Value+"','"+Aluno_1.C_CEP.Value+"','"+Aluno_1.C_FONE1.value
+   cQuery+="','"+Aluno_1.C_FONE2.Value+"','"+Aluno_1.C_nome.value+"','"+substr(Aluno_1.T_turma.displayvalue,1,6)
+   cQuery+="','"+Aluno_1.T_profe.displayvalue+"','"+dtos(Aluno_1.D_dtentr.value)
+	cQuery+="','"+dtos(Aluno_1.D_dtsaid.value)+"','"+Aluno_1.C_rgalu.value+"')"
+   oQueryUp:=oServer:Query(cQuery) 
+Elseif Aluno_1.nuevo.enabled == .F.
+   cQuery:="UPDATE escola.cad_alu SET CPF_ALU='"+Aluno_1.C_CPF.Value+"',DT_NASC='"+dtos(Aluno_1.D_dtnas.Value)
+   cQuery+="',SEXO_ALU='"+str(Aluno_1.C_sexo.Value,1)+"',END_ALU='"+Aluno_1.C_END.Value
+	cQuery+="',BAI_ALU='"+Aluno_1.C_BAI.Value+"',CID_ALU='"+Aluno_1.C_CID.Value
+	cQuery+="',CEP_ALU='"+Aluno_1.C_CEP.Value+"',FONE_1='"+Aluno_1.C_FONE1.value
+   cQuery+="',FONE_2='"+Aluno_1.C_FONE2.Value+"',NOME_ALU='"+Aluno_1.C_nome.value
+	cQuery+="',COD_HOR='"+substr(Aluno_1.T_turma.displayvalue,1,6)+"',PROF_RESP='"+Aluno_1.T_profe.displayvalue
+	cQuery+="',DTENTR='"+dtos(Aluno_1.D_dtentr.value)+"',DTSAID='"+dtos(Aluno_1.D_dtsaid.value)
+	cQuery+="',RG_ALU='"+Aluno_1.C_rgalu.value+"' where RA_ALUNO='"+c_codigo+"'"
+	oQueryUp:=oServer:Query(cQuery) 
+EndIf
+
+AbrirAluno()   
+   
+Aluno_1.Browse_1.Refresh
+Aluno_1.nuevo.enabled:=.T.
+Aluno_1.editar.enabled:=.T.
+DesativaGet()
+Return
+
+*------------------------------------------------------------------------------*
+PROCEDURE MostraGet()
+*------------------------------------------------------------------------------*
+Local oRow                                                                                                   
+Local oQuery
+LOCAL c_codigo:=PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)
+
+oQuery := oServer:Query( "Select RA_ALUNO,CPF_ALU,DT_NASC,SEXO_ALU,END_ALU,BAI_ALU,CID_ALU,CEP_ALU,FONE_1,FONE_2,NOME_ALU,COD_HOR,PROF_RESP,DTENTR,DTSAID,RG_ALU from escola.cad_alu where ra_aluno='"+c_codigo+"'")
+////                                 1        2      3       4        5       6       7       8      9     10        11     12       13       14     15     16
+
+If oQuery:LastRec() > 0 
+   oRow := oQuery:GetRow(1) 
+   Cria__Gets_Aluno(@oRow)
+endif   
+oQuery:Destroy()   
+Return
+*------------------------------------------------------------------------------*
+PROCEDURE Cria__Gets_Aluno(oRow)
+*------------------------------------------------------------------------------*
+LOCAL c_codigo:=PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)
+local n_pos:=0
+Aluno_1.N_RA.Value:=val(oRow:fieldGet(1)) 
+Aluno_1.C_nome.value:=oRow:fieldGet(11)
+Aluno_1.D_dtnas.value:=oRow:fieldGet(3)
+Aluno_1.D_dtentr.value:=oRow:fieldGet(14)  
+Aluno_1.D_dtsaid.value:=oRow:fieldGet(15)  
+Aluno_1.C_CPF.VALUE:=oRow:fieldGet(2)
+Aluno_1.C_sexo.VALUE:=val(oRow:fieldGet(4))
+Aluno_1.C_END.VALUE:=oRow:fieldGet(5)  
+Aluno_1.C_BAI.VALUE:=oRow:fieldGet(6)  
+Aluno_1.C_CID.VALUE:=oRow:fieldGet(7)  
+Aluno_1.C_CEP.VALUE:=oRow:fieldGet(8)  
+Aluno_1.C_FONE1.VALUE:=oRow:fieldGet(9)   
+Aluno_1.C_FONE2.VALUE:=oRow:fieldGet(10) 
+Aluno_1.T_turma.VALUE:=oRow:fieldGet(12)
+Aluno_1.C_rgalu.value:=oRow:fieldGet(16)
+
+FOR i := 1 TO Aluno_1.T_profe.ItemCount
+      Aluno_1.T_profe.value:=i
+      if Aluno_1.T_profe.displayValue = oRow:fieldGet(13)
+         n_pos:=i
+         exit
+      endif   
+NEXT i
+Aluno_1.T_profe.value:=n_pos
+
+if file("C:\principe\fotos_ra\"+alltrim(str(val(c_codigo),10))+".jpg")
+   Aluno_1.FotoRa.Picture:="C:\principe\fotos_ra\"+alltrim(c_codigo)+".jpg"
+else
+   Aluno_1.FotoRa.Picture:="principe.jpg"
+endif   
+Atualiza_Grid_p(c_codigo)
+Atualiza_Grid_M(c_codigo) 
+Atualiza_Grid_O(c_codigo) 
+Aluno_1.Browse_1.Refresh
+Return
+
+Procedure Checa_Ra()
+**********************************
+* verifica possibilidade de inclusão
+**********************************
+local cQuery
+oQuery := oServer:Query( "Select ra_aluno From escola.cad_alu WHERE ra_aluno='"+strzero(Aluno_1.N_RA.Value,10)+"'")
+if oQuery:LastRec() > 0
+   Msginfo("Numero de RA Já Cadastrado!","Verifique")
+   CancelaGet()
+EndIf   
+oQuery:Destroy()
+Return NIL           
+
+*------------------------------------------------------------------------------*
+Procedure EliminaGet()
+*------------------------------------------------------------------------------*
+local cQuery
+LOCAL c_codigo:=PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)
+If MsgYesNo ( "Confirma Exclusão ?","Atenção")
+   cQuery:= oServer:Query( "DELETE FROM escola.cad_alu WHERE ra_aluno='"+c_codigo+"'")
+   cQuery:Destroy()
+   MostraGet()
+EndIf
+Return NIL
+
+*------------------------------------------------------------------------------*
+PROCEDURE Inclusao_Ra()
+*------------------------------------------------------------------------------*
+Aluno_1.N_RA.Value:=0
+Aluno_1.C_nome.value:=Space(30)
+Aluno_1.D_dtnas.value:=CTOD("")
+Aluno_1.D_dtentr.value:=CTOD("")
+Aluno_1.D_dtsaid.value:=CTOD("01/01/1901")
+Aluno_1.C_CPF.VALUE:=Space(15)
+Aluno_1.C_sexo.VALUE:=Space(1) 
+Aluno_1.C_END.VALUE:=Space(40)  
+Aluno_1.C_BAI.VALUE:=Space(20)  
+Aluno_1.C_CID.VALUE:=Space(20)  
+Aluno_1.C_CEP.VALUE:=Space(10)  
+Aluno_1.C_FONE1.VALUE:=Space(30)   
+Aluno_1.C_FONE2.VALUE:=Space(30)
+Aluno_1.T_turma.VALUE:=space(01)
+Aluno_1.C_rgalu.value:=space(19)
+Aluno_1.T_profe.VALUE:=space(20)
+Aluno_1.FotoRa.Picture:="principe.jpg"
+AtivaGet()
+return
+
+**************************************
+PROCEDURE Imprimir_RA(x_aluno)
+**************************************
+#include "winprint.ch"
+Local dirimp:=GetCurrentFolder()
+local prys:=""
+
+Request HB_CODEPAGE_PT850
+
+if file("C:\principe\fotos_ra\"+alltrim(str(val(alu->ra_aluno)))+".jpg")
+   prys:="C:\principe\fotos_ra\"+alltrim(str(val(alu->ra_aluno)))+".jpg"
+else
+   prys:="principe.jpg"
+endif 
+						 
+TITULOIMP:="Ficha de Aluno"
+ 
+INIT PRINTSYS
+SELECT BY DIALOG PREVIEW
+
+IF HBPRNERROR>0
+   release printsys
+   SetCurrentFolder(dirimp)
+   return nil
+ENDIF
+
+HB_SETCODEPAGE( "PT850" )
+
+SET UNITS MM
+// Definição das fontes.
+define font "ft08" name "times new roman" size 08
+define font "ft10" name "times new roman" size 10
+define font "ft12" name "times new roman" size 12 //bold=negrita
+define font "ft14" name "times new roman" size 14
+define font "ft18" name "times new roman" size 18
+
+// Definição das Linhas.
+define pen "p0" style PS_SOLID width 1 color 0x000000
+define pen "p1" style PS_DOT width 1 color 0xFF0000
+define pen "p2" style PS_NULL
+
+set page orientation DMORIENT_PORTRAIT papersize DMPAPER_A4 font "ft10"
+//set page orientation DMORIENT_LANDSCAPE papersize DMPAPER_A4 font "ft10"
+start doc name TituloImp
+start page
+   
+PAG:=0
+LH:=0
+alu->(dbseek(x_aluno))
+select font "ft12"
+select pen "p0"
+
+LH:=10
+select font "ft14"
+@ LH,05 SAY EMPRESA TO PRINT
+@ lh,150 PICTURE prys SIZE 25,30 
+LH+=10
+@ LH,70 SAY "Ficha de Aluno" TO PRINT
+LH+=10
+select font "ft12"
+@ LH,05 SAY "R.A.:"+alu->ra_aluno+" Matricula:"+dtoc(alu->dtentr)+" Nome:"+alu->nome_alu TO PRINT
+lh+=5
+@ LH,05 SAY "Dt.Nascimento:"+dtoc(alu->dt_nasc)+" Sexo:"+if(ALU->SEXO_ALU="1","Masculino","Feminino")+" Dt.Saida:"+dtoc(alu->dtsaid) TO PRINT
+LH+=5
+@ LH,05 SAY "Nome :"+alu->nome_alu+" Bairro:"+ALU->BAI_ALU+" Cidade:"+ALU->CID_ALU TO PRINT
+LH+=5
+@ lh,05 say "Cep  :"+ALU->CEP_ALU+" Cpf:"+ALU->CPF_ALU+" R.G.:"+ALU->RG_ALU to print
+lh+=5
+@ lh,05 say "Telefones :"+ALU->FONE_1+" / "+ALU->FONE_2 to print
+lh+=5
+@ lh,05 say "Turma     :"+if(prod->(dbseek(str(ALU->COD_HOR,6,2))),prod->DESPRO+"|"+PROD->HINC+" a "+PROD->Hfim,"") to print
+lh+=5
+cli->(dbsetorder(2))
+@ lh,05 say "Professor :"+if(CLI->(DBSEEK(ALU->PROF_RESP)),cli->DESCR,"") to print
+cli->(dbsetorder(1))
+lh+=8
+@ LH,04,LH+4,055 RECTANGLE
+@ lh,05 say "Cadastro dos Responsáveis"  to print
+lh+=4
+@ LH,004,LH+4,026 RECTANGLE
+@ LH,026,LH+4,081 RECTANGLE
+@ LH,081,LH+4,114 RECTANGLE
+@ LH,114,LH+4,138 RECTANGLE
+@ LH,138,LH+4,157 RECTANGLE
+@ LH,157,LH+4,180 RECTANGLE
+@ lh,05 say 'Parentesco   Nome                                          Telefone                 Telefone         Prioridade Responsável' to print
+lh+=4
+trp->(dbseek(x_Aluno))
+do while trp->(!eof()) .AND. trp->RA_RESP == x_Aluno
+   @ LH,004,LH+4,026 RECTANGLE
+   @ LH,026,LH+4,081 RECTANGLE
+   @ LH,081,LH+4,114 RECTANGLE
+   @ LH,114,LH+4,138 RECTANGLE
+   @ LH,138,LH+4,157 RECTANGLE
+   @ LH,157,LH+4,180 RECTANGLE
+   if val(Trp->PRIO_RESP) == 1
+	   d_prio:="Alta"
+   elseif val(Trp->PRIO_RESP) == 2
+   	d_prio:="Media"
+	elseif val(Trp->PRIO_RESP) == 3		
+		d_prio:="Baixa"
+	endif		
+	d_resp:=if(Trp->RESP_CRIA="1","Sim","Não")
+   @ lh,05 say Trp->FILIACAO+"   "+Trp->NOME_RESP+"   "+Trp->FONE1_RESP+"   "+Trp->FONE2_RESP+"   "+d_prio+"            "+d_resp to print 
+	lh+=5
+   trp->(dbskip())
+enddo
+lh+=5
+@ LH,04,LH+4,055 RECTANGLE
+@ lh,05 say 'Observações   Diarias' to print
+lh+=4
+@ LH,004,LH+4,030 RECTANGLE
+@ LH,030,LH+4,180 RECTANGLE
+@ lh,005 say 'Data                Descrição da Observação' to print  
+lh+=4   
+cto->(dbseek(x_Aluno))
+do while cto->(!eof()) .AND. cto->RA_OBS == x_Aluno  
+   @ LH,004,LH+4,030 RECTANGLE
+   @ lh,005 say dtoc(cto->DT_OBS) to print
+   m_obs:=cto->OBS_ALU
+   For n:=1 To MlCount( m_obs, 60 )
+       @ LH,030,LH+4,180 RECTANGLE
+       @ lh,030 say MemoLine( m_obs, 60, n ) TO PRINT
+       lh+=4
+   next    
+   cto->(dbskip())
+enddo
+end page
+end doc
+release printsys
+SetCurrentFolder(dirimp)
+Aluno_1.RELEASE
+RETURN NIL 
+
+*------------------------------------------------------------------------------*
+Procedure Buscar_RA()
+*------------------------------------------------------------------------------*
+Local Buscar
+Local nOption:=0 
+local nPos:=0
+LOCAL i, j
+Local oRow
+Local oQuery
+LOCAL c_codigo
+
+nOption:=MsgOptions("Opçôes","Pesquisa","Users.Bmp" , {"&R. A.","&Nome"}, 2, 20 )
+
+  DO CASE
+     CASE nOption=1
+          Buscar := alltrim(InputBox( 'Informe Fantasia' , 'Pesquisa' ) )  
+          FOR i := 1 TO Aluno_1.Browse_1.ItemCount
+              Aluno_1.Browse_1.value:=i
+              if alltrim(PegaValorDaColuna( "BROWSE_1" , "Aluno_1",1)) = Buscar
+                 nPos:=1
+                 exit
+              endif   
+          NEXT i
+     CASE nOPTION=2
+          Buscar := AllTrim ( InputBox( 'Informe Nome' , 'Pesquisa' ) )
+          FOR i := 1 TO Aluno_1.Browse_1.ItemCount
+              Aluno_1.Browse_1.value:=i
+              if alltrim(PegaValorDaColuna( "BROWSE_1" , "Aluno_1",2)) = Buscar
+                 nPos:=1
+                 exit
+              endif   
+          NEXT i          
+  ENDCASE 			  
+
+If NPos > 0
+   c_codigo:=PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)
+   oQuery := oServer:Query( "Select RA_ALUNO,CPF_ALU,DT_NASC,SEXO_ALU,END_ALU,BAI_ALU,CID_ALU,CEP_ALU,FONE_1,FONE_2,NOME_ALU,COD_HOR,PROF_RESP,DTENTR,DTSAID,RG_ALU from escola.cad_alu ra_aluno='"+c_codigo+"'")
+     //                                 1        2      3       4        5       6       7       8      9     10        11     12       13       14     15     16
+   oRow := oQuery:GetRow(1) 
+   Cria__Gets_Aluno(@oRow)
+   oQuery:Destroy() 
+Else
+   MsgExclamation('Não Encontrado Registro')
+endif   
+
+Aluno_1.Browse_1.Refresh
+       
+Return
+
+*------------------------------------------------------------------------------*
+PROCEDURE DesativaGet_rep()
+*------------------------------------------------------------------------------*
+Aluno_1.C_FILIACAO.Enabled:=.F.
+Aluno_1.C_NOME_RESP.Enabled:=.F.
+Aluno_1.C_END_RESP.Enabled:=.F.
+Aluno_1.C_BAI_RESP.Enabled:=.F.
+Aluno_1.C_CID_RESP.Enabled:=.F.
+Aluno_1.C_CEP_RESP.Enabled:=.F.
+Aluno_1.C_FONE1_RESP.Enabled:=.F.
+Aluno_1.C_FONE2_RESP.Enabled:=.F.
+Aluno_1.C_PROF_RESP.Enabled:=.F.
+Aluno_1.C_RESP_CRIA.Enabled:=.F.
+Aluno_1.C_PRIO_RESP.Enabled:=.f.
+Aluno_1.Btn_SResp.Enabled:=.f.
+Aluno_1.Btn_CResp.Enabled:=.f.
+return
+
+*------------------------------------------------------------------------------*
+PROCEDURE Ativar_Get_rep()
+*------------------------------------------------------------------------------*
+Aluno_1.C_FILIACAO.Enabled:=.t.
+Aluno_1.C_NOME_RESP.Enabled:=.t.
+Aluno_1.C_END_RESP.Enabled:=.t.
+Aluno_1.C_BAI_RESP.Enabled:=.t.
+Aluno_1.C_CID_RESP.Enabled:=.t.
+Aluno_1.C_CEP_RESP.Enabled:=.t.
+Aluno_1.C_FONE1_RESP.Enabled:=.t.
+Aluno_1.C_FONE2_RESP.Enabled:=.t.
+Aluno_1.C_PROF_RESP.Enabled:=.t.
+Aluno_1.C_RESP_CRIA.Enabled:=.t.
+Aluno_1.C_PRIO_RESP.Enabled:=.t.
+Aluno_1.Btn_SResp.Enabled:=.t.
+Aluno_1.Btn_CResp.Enabled:=.t.
+return
+
+*------------------------------------------------------------------------------*
+PROCEDURE Inclusao_Resp()
+*------------------------------------------------------------------------------*
+Aluno_1.C_FILIACAO.value:=space(15)
+Aluno_1.C_NOME_RESP.value:=space(30)
+Aluno_1.C_END_RESP.value:=space(40)
+Aluno_1.C_BAI_RESP.value:=space(20)
+Aluno_1.C_CID_RESP.value:=space(15)
+Aluno_1.C_CEP_RESP.value:=space(10)
+Aluno_1.C_FONE1_RESP.value:=space(17)
+Aluno_1.C_FONE2_RESP.value:=space(17)
+Aluno_1.C_PROF_RESP.value:=space(30)
+Aluno_1.C_RESP_CRIA.value:=space(01)
+Aluno_1.C_PRIO_RESP.value:=space(01)
+Aluno_1.C_FILIACAO.setfocus
+return
+
+*------------------------------------------------------------------------------*
+PROCEDURE Grava_Resp()
+*------------------------------------------------------------------------------*
+LOCAL oQueryUp
+LOCAL c_codigo:=PegaValorDaColuna( "BROWSE_1" , "Aluno_1" ,1)
+
+If x_resp == 0
+   cQuery:="INSERT INTO escola.tab_resp (RA_RESP,FILIACAO,NOME_RESP,END_RESP,BAI_RESP,CID_RESP"
+   cQuery+="CEP_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,PROF_RESP,RESP_CRIA)"
+   cQuery+=" values ('"+strzero(Aluno_1.N_RA.value,10)+"','"+Aluno_1.C_FILIACAO.Value
+	cQuery+="','"+Aluno_1.C_NOME_RESP.value+"','"+Aluno_1.C_END_RESP.value
+   cQuery+="','"+Aluno_1.C_BAI_RESP.value+"','"+Aluno_1.C_CID_RESP.value
+   cQuery+="','"+Aluno_1.C_CEP_RESP.value+"','"+Aluno_1.C_FONE1_RESP.value
+   cQuery+="','"+Aluno_1.C_FONE2_RESP.value+"','"+str(Aluno_1.C_PRIO_RESP.value,1)
+	cQuery+="','"+Aluno_1.C_PROF_RESP.value+"','"+str(Aluno_1.C_RESP_CRIA.value,1)+"')"
+   oQueryUp:=oServer:Query(cQuery)
+Else
+   cQuery:="UPDATE escola.tab_resp SET FILIACAO='"+Aluno_1.C_FILIACAO.value
+	cQuery+="',NOME_RESP='"+Aluno_1.C_NOME_RESP.value
+   cQuery+="',END_RESP='"+Aluno_1.C_END_RESP.value
+	cQuery+="',BAI_RESP='"+Aluno_1.C_BAI_RESP.value
+	cQuery+="',CID_RESP='"+Aluno_1.C_CID_RESP.value
+   cQuery+="',CEP_RESP='"+Aluno_1.C_CEP_RESP.value
+	cQuery+="',FONE1_RESP='"+Aluno_1.C_FONE1_RESP.value
+	cQuery+="',FONE2_RESP='"+Aluno_1.C_FONE2_RESP.value
+   cQuery+="',FONE_2='"+Aluno_1.C_FONE2.Value
+	cQuery+="',PRIO_RESP='"+str(Aluno_1.C_PRIO_RESP.value,1)
+	cQuery+="',PROF_RESP='"+Aluno_1.C_PROF_RESP.value
+	cQuery+="',RESP_CRIA='"+str(Aluno_1.C_RESP_CRIA.value,1)
+	cQuery+="' where RA_RESP='"+c_codigo+"'"
+   oQueryUp:=oServer:Query(cQuery)   
+EndIf
+oQuery:Destroy()
+x_resp:=0
+Atualiza_Grid_p(c_codigo)
+if msgyesno("Deseja Cadastrar mais Responsaveis?","Atenção")
+   Inclusao_Resp()
+else
+   CancelaGet() 
+endif	  
+RETURN 
+
+*------------------------------------------------------------------------------*
+PROCEDURE Atualiza_Grid_p(R_Ra)
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+local a_rray:={}
+Local a_prio:=space(10)
+Local a_Resp:=space(10)
+
+DELETE ITEM ALL FROM G_Parente Of Aluno_1
+
+/*
+oQuery := oServer:Query("Select FILIACAO,NOME_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,RESP_CRIA, CASE tab_resp.PRIO_RESP"
+       oQuery+=" WHEN 1 THEN 'Alta'"
+       oQuery+=" WHEN 2 THEN 'Media'"
+       oQuery+=" WHEN 3 THEN 'Baixa'"
+       oQuery+=" END AS PRIOR,"
+       oQuery+=" IF(RESP_CRIA=1,'Sim','Não') AS pode,"
+       oQuery+=" From escola.tab_resp WHERE tab_resp.RA_RESP="+[']+R_RA+['])
+
+if oQuery:LastRec() > 0
+   nCounter++
+   oRow := oQuery:GetRow(i)
+   ADD item ( oRow:fieldGet(1),oRow:fieldGet(2),oRow:fieldGet(3),oRow:fieldGet(4),oRow:fieldGet(5),oRow:fieldGet(6),oRow:fieldGet(7),oRow:fieldGet(8)) TO G_Parente Of Aluno_1
+   oQuery:Skip(1)
+endif
+oQuery:Destroy()
+*/    
+// teste  que funciona
+oQuery := oServer:Query( "Select FILIACAO,NOME_RESP,FONE1_RESP,FONE2_RESP,PRIO_RESP,RESP_CRIA  From escola.tab_resp WHERE tab_resp.RA_RESP='"+R_RA+"'")
+                                          
+if oQuery:LastRec() > 0
+   nCounter++
+   oRow := oQuery:GetRow(i)
+	do case
+      case oRow:fieldGet(5) = "1"
+	        a_prio:="Alta"
+      case oRow:fieldGet(5) = "2"
+	        a_prio:="Media"
+      case oRow:fieldGet(5) = "3"
+		     a_prio:="Baixa"	
+   endcase 	
+	a_Resp:=if(oRow:fieldGet(6)="1","Sim","Não")		 			 		       
+
+   aadd(a_rray,{oRow:fieldGet(1),oRow:fieldGet(2),oRow:fieldGet(3),oRow:fieldGet(4),a_prio,a_Resp})
+   oQuery:Skip(1)
+endif
+oQuery:Destroy()
+
+Aluno_1.G_Parente.SetArray( a_rray )
+Aluno_1.G_Parente.Value := 1
+Return
+
+*------------------------------------------------------------------------------*
+PROCEDURE Atualiza_Grid_M(R_RA)
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+LOCAL a_rray:={}
+Aluno_1.G_medicos.deleteallitems
+
+oQuery:=oServer:Query( "Select tab_med.desmed,ctrmed.DTENCAM,ctrmed.DESCENCA,ctrmed.OBSMED,ctrmed.RETFAM,ctrmed.OBSFAM From escola.ctrmed INNER JOIN escola.tab_med where ra_med="+R_Ra)
+
+if oQuery:LastRec() > 0
+    nCounter++
+    oRow := oQuery:GetRow(i)
+    //ADD item (oRow:fieldGet(1),dtoc(oRow:fieldGet(2)),oRow:fieldGet(3),substr(oRow:fieldGet(4),1,20),dtoc(oRow:fieldGet(5)),substr(oRow:fieldGet(6),1,20)) TO G_medicos Of Aluno_1
+    aadd(a_rray,{oRow:fieldGet(1),dtoc(oRow:fieldGet(2)),oRow:fieldGet(3),substr(oRow:fieldGet(4),1,20),dtoc(oRow:fieldGet(5)),substr(oRow:fieldGet(6),1,20)})
+    oQuery:Skip(1)                      
+endif
+oQuery:Destroy()   
+Aluno_1.G_medicos.SetArray( a_rray )
+Aluno_1.G_medicos.Value := 1
+Return
+
+*------------------------------------------------------------------------------*
+PROCEDURE Atualiza_Grid_O(R_RA)
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+local a_rray:={}
+//local c_codigo:=strzero(str(val(Ra_Aluno),10),10)
+
+Aluno_1.G_obse_alu.deleteallitems
+
+oQuery := oServer:Query( "Select DT_OBS,OBS_ALU From escola.ctrobs where RA_OBS='"+R_Ra+"'")
+
+for i:=1 to oQuery:LastRec() 
+    nCounter++
+    oRow := oQuery:GetRow(i)
+    //ADD item (dtoc(oRow:fieldGet(1)),alltrim(oRow:fieldGet(2))) TO G_obse_alu Of Aluno_1
+    aadd(a_rray,{dtoc(oRow:fieldGet(1)),alltrim(oRow:fieldGet(2))})
+    oQuery:Skip(1)
+next
+oQuery:Destroy()
+Aluno_1.G_obse_alu.SetArray( a_rray )
+Aluno_1.G_obse_alu.Value := 1
+Return
+
+*------------------------------------------------------------------------------*
+PROCEDURE ALTERA_G_P()
+*------------------------------------------------------------------------------*
+Local oRow
+Local i
+Local oQuery
+LOCAL nCounter:= 0
+LOCAL oQueryUp
+local NOPTION:=0
+local c_codigo:=PegaValorDaColuna( "Browse_1" , "Aluno_1" , 1 )
+
+nOption:=MsgOptions("Veja as Opções ?","Responsável Já Cadastrado!","Users.Bmp" , {"&Altera","&Exclui","&Retorna"},1,30,60) 
+
+if NOPTION == 3
+   return nill
+endif   
+
+DO CASE
+   CASE NOPTION ==1   
+        oQuery:=oServer:Query("Select * From escola.tab_resp WHERE escola.ra_resp='"+c_codigo+"'")
+        If oQuery:LastRec() > 0 
+           oRow := oQuery:GetRow(i) 
+		     Aluno_1.C_FILIACAO.value:=oRow:fieldGet(2)
+           Aluno_1.C_NOME_RESP.value:=oRow:fieldGet(3) 
+           Aluno_1.C_END_RESP.value:=oRow:fieldGet(4) 
+           Aluno_1.C_BAI_RESP.value:=oRow:fieldGet(5)
+           Aluno_1.C_CID_RESP.value:=oRow:fieldGet(6) 
+           Aluno_1.C_CEP_RESP.value:=oRow:fieldGet(7)
+           Aluno_1.C_FONE1_RESP.value:=oRow:fieldGet(8) 
+           Aluno_1.C_FONE2_RESP.value:=oRow:fieldGet(9) 
+           Aluno_1.C_PRIO_RESP.value:=oRow:fieldGet(10)
+           Aluno_1.C_PROF_RESP.value:=oRow:fieldGet(11) 
+           Aluno_1.C_RESP_CRIA.value:=oRow:fieldGet(12)
+           x_resp:=1
+           oQuery:Destroy()
+		     Ativar_Get_rep()  
+		  else
+		     msginfo("Dados Não Encontrados!Verifique ")
+		  endif	    	        
+   CASE NOPTION ==2
+        If MsgYesNo ( "Confirma Exclusão Responsável ?","Atenção")
+           cQuery:= oServer:Query( "DELETE FROM escola.tab_resp WHERE ra_resp='"+c_codigo+"'")
+           cQuery:Destroy()
+  		     Atualiza_Grid_p(c_codigo)
+  		     Aluno_1.G_Parente.SETFOCUS
+  		  ENDIF   
+ENDCASE  		  
+Return 
